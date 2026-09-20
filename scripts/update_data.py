@@ -44,6 +44,24 @@ def profile(acc, oi, hr):
     return "Negative reliability: more confidently wrong answers than correct answers."
 
 
+# Only effort annotations are removed; model versions, sizes and dates stay distinct.
+EFFORT = {"minimal": 1, "low": 2, "medium": 3, "high": 4, "xhigh": 5, "max": 6}
+EFFORT_NOTE = re.compile(r"\((minimal|low|medium|high|xhigh|max)(?:\s+with fallback)?\)", re.I)
+
+
+def highest_reasoning(models):
+    selected = {}
+    for row in models:
+        name = row["model"]
+        match = EFFORT_NOTE.search(name)
+        key = EFFORT_NOTE.sub("", name).strip().casefold()
+        rank = EFFORT[match.group(1).lower()] if match else 0
+        previous = selected.get(key)
+        if previous is None or rank > previous[0]:
+            selected[key] = (rank, row)
+    return [entry[1] for entry in selected.values()]
+
+
 def build():
     page = fetch_page()
     indexes = metric_rows(page, "omniscienceIndex")
@@ -83,6 +101,7 @@ def build():
 
     if len(models) < 15:
         raise RuntimeError(f"Only {len(models)} usable model records found; source format may have changed.")
+    models = highest_reasoning(models)
     models.sort(key=lambda row: row["omniscienceIndex"], reverse=True)
     return {
         "source": SOURCE,
