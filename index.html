@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>AA-Omniscience Benchmark Cheat Sheet</title>
+  <meta name="description" content="A daily-updated AA-Omniscience benchmark table with accuracy, hallucination rate, Omniscience Index and derived answer outcomes.">
+  <style>
+    :root{--bg:#071018;--panel:#0d1823;--panel2:#132230;--line:#22384a;--text:#eaf2f8;--muted:#91a7b8;--cyan:#36d7d0;--blue:#60a5fa;--green:#38d996;--red:#fb7185;--amber:#fbbf24;color-scheme:dark}
+    html[data-theme=light]{--bg:#f4f8fa;--panel:#fff;--panel2:#edf5f7;--line:#d4e2e8;--text:#13202b;--muted:#5d7281;--cyan:#087f7b;--blue:#2563eb;--green:#087f5b;--red:#be123c;--amber:#a16207;color-scheme:light}
+    *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#36d7d01b,transparent 30%),var(--bg);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}.wrap{width:min(1420px,calc(100% - 28px));margin:auto}header{padding:42px 0 22px}.eyebrow{color:var(--cyan);font-size:.75rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.02;letter-spacing:-.045em;margin:9px 0 12px}.intro{max-width:900px;color:var(--muted);font-size:1.02rem}.metrics{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:25px 0}.metric{padding:17px;border:1px solid var(--line);border-radius:17px;background:linear-gradient(180deg,var(--panel2),var(--panel))}.metric b{display:block;color:var(--cyan);font-size:1.05rem}.metric span{color:var(--muted);font-size:.87rem}.formula{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;color:var(--text)}
+    .toolbar{position:sticky;top:0;z-index:5;padding:13px 0;background:#071018e8;border-block:1px solid var(--line);backdrop-filter:blur(18px)}html[data-theme=light] .toolbar{background:#f4f8fae8}.tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.tools input,.tools select,.btn{min-height:43px;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--text);padding:9px 12px;font:inherit}.tools input{flex:1;min-width:230px}.btn{cursor:pointer}.status{margin-left:auto;color:var(--muted);font-size:.82rem}
+    .tablebox{margin:24px 0 34px;overflow:auto;border:1px solid var(--line);border-radius:17px;background:var(--panel)}table{width:100%;border-collapse:collapse;min-width:1050px}th,td{padding:12px 13px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{position:sticky;top:70px;background:var(--panel2);color:var(--muted);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}th:first-child,td:first-child,th:last-child,td:last-child{text-align:left}tbody tr:hover{background:#36d7d00a}.rank{color:var(--muted);width:42px}.model a{color:var(--text);font-weight:750;text-decoration:none}.model a:hover{color:var(--cyan)}.oi{font-weight:850}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:var(--amber)}.profile{max-width:350px;white-space:normal;color:var(--muted);font-size:.86rem}.source{padding:16px 0 45px;color:var(--muted);font-size:.86rem}.source a{color:var(--cyan)}.empty{padding:45px;text-align:center;color:var(--muted)}
+    @media(max-width:760px){.metrics{grid-template-columns:1fr}.status{width:100%;margin:0}.toolbar{position:static}th{position:static}}
+  </style>
+</head>
+<body>
+<header class="wrap">
+  <div class="eyebrow">Daily benchmark tracker</div>
+  <h1>AA-Omniscience<br>Benchmark Cheat Sheet</h1>
+  <p class="intro">Reliability, not just recall. The benchmark uses 6,000 expert-level factual questions with no tools or supplied context. Correct answers gain a point, hallucinations lose a point, and honest abstentions score zero.</p>
+  <div class="metrics">
+    <div class="metric"><b>Accuracy (Acc)</b><span>Raw knowledge: <span class="formula">c / 100</span>. Rewards correct answers but does not punish guessing.</span></div>
+    <div class="metric"><b>Hallucination Rate (HR)</b><span>Bluffing on misses: <span class="formula">i / (i + p + a)</span>. Lower is better.</span></div>
+    <div class="metric"><b>Omniscience Index (OI)</b><span>Reliability: <span class="formula">c − i</span>, from −100 to +100. Standard conversion: <span class="formula">(OI ÷ 2) + 50</span>.</span></div>
+  </div>
+</header>
+<section class="toolbar"><div class="wrap tools">
+  <input id="search" type="search" placeholder="Search models or profiles…">
+  <select id="filter"><option value="all">All reliability levels</option><option value="positive">Positive OI</option><option value="negative">Negative OI</option><option value="calibrated">HR below 40%</option></select>
+  <button class="btn" id="theme">Light mode</button>
+  <div class="status" id="status">Loading benchmark data…</div>
+</div></section>
+<main class="wrap"><div class="tablebox"><table>
+  <thead><tr><th>#</th><th data-key="model">Model</th><th data-key="correct">c</th><th data-key="incorrect">i</th><th data-key="partialAbstain">p+a</th><th data-key="accuracy">Accuracy</th><th data-key="omniscienceIndex">OI</th><th data-key="hallucinationRate">HR</th><th data-key="standardPercent">Standard %</th><th>Profile</th></tr></thead>
+  <tbody id="rows"></tbody>
+</table></div>
+<div class="source">Source: <a href="https://artificialanalysis.ai/evaluations/omniscience" target="_blank" rel="noopener">Artificial Analysis — AA-Omniscience</a>. Data is refreshed daily by an automated GitHub Action. This independent cheat sheet is not affiliated with Artificial Analysis.</div></main>
+<script>
+let data=[],sortKey="omniscienceIndex",direction=-1;
+const fmt=n=>Number(n).toLocaleString(undefined,{maximumFractionDigits:2});
+const cls=n=>n>0?"positive":n<0?"negative":"neutral";
+function render(){const q=search.value.toLowerCase().trim(),f=filter.value;let view=data.filter(x=>(!q||(x.model+" "+x.profile).toLowerCase().includes(q))&&(f==="all"||f==="positive"&&x.omniscienceIndex>=0||f==="negative"&&x.omniscienceIndex<0||f==="calibrated"&&x.hallucinationRate<40));view.sort((a,b)=>typeof a[sortKey]==="string"?direction*a[sortKey].localeCompare(b[sortKey]):direction*(a[sortKey]-b[sortKey]));rows.innerHTML=view.length?view.map((x,i)=>`<tr><td class="rank">${i+1}</td><td class="model"><a href="${x.detailsUrl}" target="_blank" rel="noopener">${x.model}</a></td><td>${fmt(x.correct)}</td><td>${fmt(x.incorrect)}</td><td>${fmt(x.partialAbstain)}</td><td>${fmt(x.accuracy)}%</td><td class="oi ${cls(x.omniscienceIndex)}">${x.omniscienceIndex>0?"+":""}${fmt(x.omniscienceIndex)}</td><td>${fmt(x.hallucinationRate)}%</td><td>${fmt(x.standardPercent)}%</td><td class="profile">${x.profile}</td></tr>`).join(""):'<tr><td colspan="10" class="empty">No models match these filters.</td></tr>'}
+fetch("data.json",{cache:"no-store"}).then(r=>{if(!r.ok)throw Error("Data unavailable");return r.json()}).then(p=>{data=p.models;status.textContent=`${p.modelCount} models · Updated ${new Date(p.updatedAt).toLocaleString()}`;render()}).catch(e=>status.textContent=e.message);
+search.oninput=render;filter.onchange=render;document.querySelectorAll("th[data-key]").forEach(th=>th.onclick=()=>{direction=sortKey===th.dataset.key?-direction:(th.dataset.key==="model"?1:-1);sortKey=th.dataset.key;render()});
+theme.onclick=()=>{const t=document.documentElement.dataset.theme==="dark"?"light":"dark";document.documentElement.dataset.theme=t;localStorage.setItem("aa-theme",t);theme.textContent=t==="dark"?"Light mode":"Dark mode"};try{document.documentElement.dataset.theme=localStorage.getItem("aa-theme")||"dark"}catch{}theme.textContent=document.documentElement.dataset.theme==="dark"?"Light mode":"Dark mode";
+</script></body></html>
