@@ -101,6 +101,7 @@ def build():
     if len(models) < 15:
         raise RuntimeError(f"Only {len(models)} usable model records found; source format may have changed.")
     models = highest_reasoning(models)
+    models = [row for row in models if row["correct"] >= 27]
     models.sort(key=lambda row: row["omniscienceIndex"], reverse=True)
     return {
         "source": SOURCE,
