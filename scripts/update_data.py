@@ -16,16 +16,24 @@ def fetch_page():
         return html.unescape(response.read().decode("utf-8"))
 
 
-def metric_rows(page, key):
-    pattern = re.compile(
-        r'\{"label":"(?P<label>(?:\\.|[^"])*)","' + re.escape(key) +
-        r'":(?P<value>-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?),"detailsUrl":"(?P<url>[^"]+)"\}'
-    )
-    rows = {}
-    for match in pattern.finditer(page):
-        label = json.loads('"' + match.group("label") + '"')
-        rows[match.group("url")] = {"model": label, "value": float(match.group("value"))}
-    return rows
+def source_models(page):
+    """Read complete default-selected model records, not truncated chart summaries."""
+    chunks = re.finditer(r'self\.__next_f\.push\(\[1,("(?:\\.|[^"\\])*")\]\)', page)
+    payload = "".join(json.loads(match.group(1)) for match in chunks)
+    decoder = json.JSONDecoder()
+    records = {}
+    for match in re.finditer(r'\{"id":"[^"\n]+","slug":', payload):
+        try:
+            row, _ = decoder.raw_decode(payload, match.start())
+        except ValueError:
+            continue
+        breakdown = row.get("omniscienceBreakdown")
+        if isinstance(row.get("omniscience"), (int, float)) and isinstance(breakdown, dict):
+            if all(isinstance(breakdown.get(key), (int, float)) for key in ("accuracy", "hallucinationRate")):
+                records[row["slug"]] = row
+    if len(records) < 15:
+        raise RuntimeError("Complete model records missing; keeping previous data.")
+    return list(records.values())
 
 
 def profile(acc, oi, hr):
@@ -64,31 +72,22 @@ def highest_reasoning(models):
 
 def build():
     page = fetch_page()
-    indexes = metric_rows(page, "omniscienceIndex")
-    accuracies = metric_rows(page, "omniscienceAccuracy")
-    hallucinations = metric_rows(page, "omniscienceHallucinationRate")
-    urls = sorted(set(indexes) | set(accuracies) | set(hallucinations))
-
+    records = source_models(page)
     models = []
-    for url in urls:
-        present = sum(url in group for group in (indexes, accuracies, hallucinations))
-        if present < 2:
-            continue
-        acc = accuracies.get(url, {}).get("value")
-        oi = indexes.get(url, {}).get("value")
-        hr = hallucinations.get(url, {}).get("value")
-        if acc is not None and oi is not None:
-            hr = (acc * 100 - oi) / (100 - acc * 100)
-        elif acc is not None and hr is not None:
-            oi = acc * 100 - hr * (100 - acc * 100)
-        elif oi is not None and hr is not None:
-            acc = ((oi + 100 * hr) / (1 + hr)) / 100
+    for row in records:
+        acc = row["omniscienceBreakdown"]["accuracy"]
+        oi = row["omniscience"]
+        hr = row["omniscienceBreakdown"]["hallucinationRate"]
+        if not (0 <= acc <= 1 and -100 <= oi <= 100 and 0 <= hr <= 1):
+            raise RuntimeError("Invalid benchmark values for " + row["slug"])
+        if abs((acc * 100 - hr * (100 - acc * 100)) - oi) > 0.1:
+            raise RuntimeError("Inconsistent benchmark metrics for " + row["slug"])
         correct = acc * 100
         incorrect = correct - oi
         partial_abstain = 100 - correct - incorrect
         models.append({
-            "model": (indexes.get(url) or accuracies.get(url) or hallucinations[url])["model"],
-            "detailsUrl": "https://artificialanalysis.ai" + url,
+            "model": row.get("shortName") or row["name"],
+            "detailsUrl": "https://artificialanalysis.ai/models/" + row["slug"],
             "correct": round(correct, 2),
             "incorrect": round(incorrect, 2),
             "partialAbstain": round(partial_abstain, 2),
