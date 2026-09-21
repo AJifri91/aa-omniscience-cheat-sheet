@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-09-21T22:19:43.891158Z",
+  "updatedAt": "2026-09-21T22:25:05.062102Z",
   "modelCount": 61,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
