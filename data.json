@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-09-21T01:03:09.936919Z",
+  "updatedAt": "2026-09-21T09:59:06.908353Z",
   "modelCount": 19,
   "models": [
     {
@@ -180,7 +180,7 @@
       "accuracy": 41.55,
       "omniscienceIndex": 2,
       "hallucinationRate": 67.66,
-      "standardPercent": 51,
+      "standardPercent": 51.0,
       "profile": "Positive reliability, but mistakes remain frequent when uncertain."
     },
     {
