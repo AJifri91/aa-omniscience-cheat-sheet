@@ -1,13 +1,26 @@
 #!/usr/bin/env python3
 import html
+import gzip
+import hashlib
 import json
 import re
 from datetime import datetime, timezone
 from pathlib import Path
 from urllib.request import Request, urlopen
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
 SOURCE = "https://artificialanalysis.ai/evaluations/omniscience"
 ROOT = Path(__file__).resolve().parents[1]
+NEW_MODEL_ACCURACY = 35
+# Models already displayed when the 35% admission rule was introduced.
+# Their original 27% minimum remains in effect; new releases use 35%.
+EXISTING_RELEASES = {
+    "claude-fable-5-1", "gpt-6-astra", "claude-fable-5", "claude-opus-5",
+    "grok-4-6", "gemini-3-8-flash", "muse-spark-1-3", "gpt-5-6-sol",
+    "kimi-k3", "step-5-preview", "glm-5-3", "qwen3-8-max-0902",
+    "glm-5-3-flash", "gemini-3-5-flash-lite", "inkling", "deepseek-v4-pro",
+    "gpt-5-6-terra", "deepseek-v4-1-flash", "gpt-5-6-luna",
+}
 
 
 def fetch_page():
@@ -17,23 +30,53 @@ def fetch_page():
 
 
 def source_models(page):
-    """Read complete default-selected model records, not truncated chart summaries."""
+    """Read the public full-model feed used by AA's model selector.
+
+    AA publishes its data path and decoding key in the page. This follows its
+    public client loader: AES-GCM, SHA256(key)[:12] nonce, then gzip + JSON.
+    Never fall back to the default selection: that silently omits new models.
+    """
     chunks = re.finditer(r'self\.__next_f\.push\(\[1,("(?:\\.|[^"\\])*")\]\)', page)
     payload = "".join(json.loads(match.group(1)) for match in chunks)
     decoder = json.JSONDecoder()
-    records = {}
-    for match in re.finditer(r'\{"id":"[^"\n]+","slug":', payload):
+    metadata = {}
+    for match in re.finditer(r'\{"slug":', payload):
         try:
             row, _ = decoder.raw_decode(payload, match.start())
         except ValueError:
             continue
+        if isinstance(row.get("release"), dict):
+            metadata[row["slug"]] = row
+    match = re.search(r'"manifest":(\{[^}]+\})', payload)
+    if not match:
+        raise RuntimeError("Full-model feed missing; keeping previous data.")
+    manifest = json.loads(match.group(1))
+    if not re.fullmatch(r"/data/[a-zA-Z0-9._/-]+", manifest["path"]):
+        raise RuntimeError("Unexpected model-feed path.")
+    request = Request("https://artificialanalysis.ai" + manifest["path"],
+                      headers={"User-Agent": "Mozilla/5.0 AA-Omniscience-Cheat-Sheet/1.0"})
+    with urlopen(request, timeout=60) as response:
+        raw = response.read()
+    if manifest.get("key"):
+        key = bytes.fromhex(manifest["key"])
+        raw = gzip.decompress(AESGCM(key).decrypt(hashlib.sha256(key).digest()[:12], raw, None))
+    records = []
+    for row in json.loads(raw)["models"]:
         breakdown = row.get("omniscienceBreakdown")
-        if isinstance(row.get("omniscience"), (int, float)) and isinstance(breakdown, dict):
-            if all(isinstance(breakdown.get(key), (int, float)) for key in ("accuracy", "hallucinationRate")):
-                records[row["slug"]] = row
+        if row.get("omniscience") is None or breakdown is None:
+            continue  # AA has not published this model's benchmark yet.
+        if not isinstance(breakdown, dict) or not all(
+            isinstance(value, (int, float)) and not isinstance(value, bool)
+            for value in (row["omniscience"], breakdown.get("accuracy"), breakdown.get("hallucinationRate"))
+        ):
+            raise RuntimeError("Invalid benchmark record: " + row["slug"])
+        meta = metadata[row["slug"]]
+        row["releaseKey"] = meta["release"]["slug"]
+        row["reasoningRank"] = (meta.get("effort") or {}).get("level", 0)
+        records.append(row)
     if len(records) < 15:
         raise RuntimeError("Complete model records missing; keeping previous data.")
-    return list(records.values())
+    return records
 
 
 def profile(acc, oi, hr):
@@ -62,12 +105,17 @@ def highest_reasoning(models):
     for row in models:
         name = row["model"]
         match = EFFORT_NOTE.search(name)
-        key = EFFORT_NOTE.sub("", name).strip().casefold()
-        rank = EFFORT[match.group(1).lower()] if match else 0
+        key = row.get("releaseKey") or EFFORT_NOTE.sub("", name).strip().casefold()
+        rank = row.get("reasoningRank", EFFORT[match.group(1).lower()] if match else 0)
         previous = selected.get(key)
         if previous is None or rank > previous[0]:
             selected[key] = (rank, row)
     return [entry[1] for entry in selected.values()]
+
+def eligible_models(models):
+    # Select reasoning first; do not substitute a lower effort just to pass.
+    return [row for row in highest_reasoning(models)
+            if row["rawAccuracy"] >= (27 if row["releaseKey"] in EXISTING_RELEASES else NEW_MODEL_ACCURACY)]
 
 
 def build():
@@ -87,6 +135,9 @@ def build():
         partial_abstain = 100 - correct - incorrect
         models.append({
             "model": row.get("shortName") or row["name"],
+            "releaseKey": row["releaseKey"],
+            "reasoningRank": row["reasoningRank"],
+            "rawAccuracy": correct,
             "detailsUrl": "https://artificialanalysis.ai/models/" + row["slug"],
             "correct": round(correct, 2),
             "incorrect": round(incorrect, 2),
@@ -100,13 +151,15 @@ def build():
 
     if len(models) < 15:
         raise RuntimeError(f"Only {len(models)} usable model records found; source format may have changed.")
-    models = highest_reasoning(models)
-    models = [row for row in models if row["correct"] >= 27]
+    models = eligible_models(models)
+    for row in models:
+        del row["rawAccuracy"]
     models.sort(key=lambda row: row["omniscienceIndex"], reverse=True)
     return {
         "source": SOURCE,
         "updatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "modelCount": len(models),
+        "admissionPolicy": {"newModelMinimumAccuracy": NEW_MODEL_ACCURACY, "existingModelMinimumAccuracy": 27},
         "models": models,
     }
 
