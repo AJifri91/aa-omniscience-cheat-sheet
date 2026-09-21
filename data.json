@@ -1,7 +1,7 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-09-20T22:33:32.295186Z",
-  "modelCount": 15,
+  "updatedAt": "2026-09-21T01:03:09.936919Z",
+  "modelCount": 26,
   "models": [
     {
       "model": "Claude Fable 5.1 (max with fallback)",
@@ -180,8 +180,140 @@
       "accuracy": 41.55,
       "omniscienceIndex": 2,
       "hallucinationRate": 67.66,
-      "standardPercent": 51,
+      "standardPercent": 51.0,
       "profile": "Positive reliability, but mistakes remain frequent when uncertain."
+    },
+    {
+      "model": "MiniMax-M3",
+      "detailsUrl": "https://artificialanalysis.ai/models/minimax-m3",
+      "correct": 16.7,
+      "incorrect": 15.35,
+      "partialAbstain": 67.95,
+      "accuracy": 16.7,
+      "omniscienceIndex": 1.35,
+      "hallucinationRate": 18.43,
+      "standardPercent": 50.67,
+      "profile": "Conservative and well calibrated, though factual coverage is more limited."
+    },
+    {
+      "model": "DeepSeek V4 Pro 0813 (max)",
+      "detailsUrl": "https://artificialanalysis.ai/models/deepseek-v4-pro",
+      "correct": 49.1,
+      "incorrect": 48.27,
+      "partialAbstain": 2.63,
+      "accuracy": 49.1,
+      "omniscienceIndex": 0.83,
+      "hallucinationRate": 94.83,
+      "standardPercent": 50.42,
+      "profile": "Positive reliability, but mistakes remain frequent when uncertain."
+    },
+    {
+      "model": "GPT-5.6 Terra (max)",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra",
+      "correct": 46.8,
+      "incorrect": 46.75,
+      "partialAbstain": 6.45,
+      "accuracy": 46.8,
+      "omniscienceIndex": 0.05,
+      "hallucinationRate": 87.88,
+      "standardPercent": 50.02,
+      "profile": "Positive reliability, but mistakes remain frequent when uncertain."
+    },
+    {
+      "model": "Nemotron 3 Ultra",
+      "detailsUrl": "https://artificialanalysis.ai/models/nvidia-nemotron-3-ultra-550b-a55b",
+      "correct": 22.58,
+      "incorrect": 22.98,
+      "partialAbstain": 54.43,
+      "accuracy": 22.58,
+      "omniscienceIndex": -0.4,
+      "hallucinationRate": 29.69,
+      "standardPercent": 49.8,
+      "profile": "Negative reliability: more confidently wrong answers than correct answers."
+    },
+    {
+      "model": "K2 Horizon 375B A23B",
+      "detailsUrl": "https://artificialanalysis.ai/models/k2-horizon-375b-a23b",
+      "correct": 18.18,
+      "incorrect": 21.15,
+      "partialAbstain": 60.67,
+      "accuracy": 18.18,
+      "omniscienceIndex": -2.97,
+      "hallucinationRate": 25.85,
+      "standardPercent": 48.52,
+      "profile": "Negative reliability: more confidently wrong answers than correct answers."
+    },
+    {
+      "model": "DeepSeek V4.1 Flash (max)",
+      "detailsUrl": "https://artificialanalysis.ai/models/deepseek-v4-1-flash",
+      "correct": 46.4,
+      "incorrect": 51.7,
+      "partialAbstain": 1.9,
+      "accuracy": 46.4,
+      "omniscienceIndex": -5.3,
+      "hallucinationRate": 96.46,
+      "standardPercent": 47.35,
+      "profile": "Negative reliability: more confidently wrong answers than correct answers."
+    },
+    {
+      "model": "Qwen3.8 27B (xhigh)",
+      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-8-27b",
+      "correct": 15.58,
+      "incorrect": 25.57,
+      "partialAbstain": 58.85,
+      "accuracy": 15.58,
+      "omniscienceIndex": -9.98,
+      "hallucinationRate": 30.29,
+      "standardPercent": 45.01,
+      "profile": "Negative reliability: more confidently wrong answers than correct answers."
+    },
+    {
+      "model": "GPT-5.6 Luna (max)",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-luna",
+      "correct": 42.73,
+      "incorrect": 53.02,
+      "partialAbstain": 4.25,
+      "accuracy": 42.73,
+      "omniscienceIndex": -10.28,
+      "hallucinationRate": 92.58,
+      "standardPercent": 44.86,
+      "profile": "Negative reliability: more confidently wrong answers than correct answers."
+    },
+    {
+      "model": "Muse Glimmer (high)",
+      "detailsUrl": "https://artificialanalysis.ai/models/muse-glimmer",
+      "correct": 26.98,
+      "incorrect": 59.83,
+      "partialAbstain": 13.18,
+      "accuracy": 26.98,
+      "omniscienceIndex": -32.85,
+      "hallucinationRate": 81.94,
+      "standardPercent": 33.58,
+      "profile": "Negative reliability: more confidently wrong answers than correct answers."
+    },
+    {
+      "model": "Mistral Medium 3.5",
+      "detailsUrl": "https://artificialanalysis.ai/models/mistral-medium-3-5",
+      "correct": 24.67,
+      "incorrect": 61.47,
+      "partialAbstain": 13.87,
+      "accuracy": 24.67,
+      "omniscienceIndex": -36.8,
+      "hallucinationRate": 81.59,
+      "standardPercent": 31.6,
+      "profile": "Negative reliability: more confidently wrong answers than correct answers."
+    },
+    {
+      "model": "gpt-oss-120b (high)",
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-oss-120b",
+      "correct": 21.78,
+      "incorrect": 71.03,
+      "partialAbstain": 7.18,
+      "accuracy": 21.78,
+      "omniscienceIndex": -49.25,
+      "hallucinationRate": 90.82,
+      "standardPercent": 25.38,
+      "profile": "Negative reliability: more confidently wrong answers than correct answers."
     }
   ]
 }
