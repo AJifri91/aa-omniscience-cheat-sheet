@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 SOURCE = "https://artificialanalysis.ai/evaluations/omniscience"
 ROOT = Path(__file__).resolve().parents[1]
 NEW_MODEL_ACCURACY = 35
+POLICY_START_DATE = "2026-09-22"
 # Models already displayed when the 35% admission rule was introduced.
 # Their original 27% minimum remains in effect; new releases use 35%.
 EXISTING_RELEASES = {
@@ -73,6 +74,7 @@ def source_models(page):
         meta = metadata[row["slug"]]
         row["releaseKey"] = meta["release"]["slug"]
         row["reasoningRank"] = (meta.get("effort") or {}).get("level", 0)
+        row["releaseDate"] = meta.get("releaseDate") or ""
         records.append(row)
     if len(records) < 15:
         raise RuntimeError("Complete model records missing; keeping previous data.")
@@ -114,8 +116,10 @@ def highest_reasoning(models):
 
 def eligible_models(models):
     # Select reasoning first; do not substitute a lower effort just to pass.
-    return [row for row in highest_reasoning(models)
-            if row["rawAccuracy"] >= (27 if row["releaseKey"] in EXISTING_RELEASES else NEW_MODEL_ACCURACY)]
+    selected = highest_reasoning(models)
+    return [row for row in selected if
+            (row["releaseKey"] in EXISTING_RELEASES and row["rawAccuracy"] >= 27) or
+            (row["releaseDate"] > POLICY_START_DATE and row["rawAccuracy"] > NEW_MODEL_ACCURACY)]
 
 
 def build():
@@ -137,6 +141,7 @@ def build():
             "model": row.get("shortName") or row["name"],
             "releaseKey": row["releaseKey"],
             "reasoningRank": row["reasoningRank"],
+            "releaseDate": row["releaseDate"],
             "rawAccuracy": correct,
             "detailsUrl": "https://artificialanalysis.ai/models/" + row["slug"],
             "correct": round(correct, 2),
@@ -159,7 +164,11 @@ def build():
         "source": SOURCE,
         "updatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "modelCount": len(models),
-        "admissionPolicy": {"newModelMinimumAccuracy": NEW_MODEL_ACCURACY, "existingModelMinimumAccuracy": 27},
+        "admissionPolicy": {
+            "newModelAccuracyMustExceed": NEW_MODEL_ACCURACY,
+            "newModelReleasedAfter": POLICY_START_DATE,
+            "existingModelMinimumAccuracy": 27,
+        },
         "models": models,
     }
 
