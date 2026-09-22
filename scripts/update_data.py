@@ -12,7 +12,6 @@ from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 SOURCE = "https://artificialanalysis.ai/evaluations/omniscience"
 ROOT = Path(__file__).resolve().parents[1]
 NEW_MODEL_ACCURACY = 35
-POLICY_START_DATE = "2026-09-22"
 # Models already displayed when the 35% admission rule was introduced.
 # Their original 27% minimum remains in effect; new releases use 35%.
 EXISTING_RELEASES = {
@@ -73,7 +72,10 @@ def source_models(page):
             raise RuntimeError("Invalid benchmark record: " + row["slug"])
         meta = metadata[row["slug"]]
         row["releaseKey"] = meta["release"]["slug"]
-        row["reasoningRank"] = (meta.get("effort") or {}).get("level", 0)
+        row["creatorSlug"] = (meta.get("creator") or {}).get("slug") or "unknown"
+        effort_match = EFFORT_NOTE.search(row.get("shortName") or row.get("name") or "")
+        row["reasoningRank"] = ((meta.get("effort") or {}).get("level") or
+                                (EFFORT[effort_match.group(1).lower()] if effort_match else 0))
         row["releaseDate"] = meta.get("releaseDate") or ""
         records.append(row)
     if len(records) < 15:
@@ -114,12 +116,73 @@ def highest_reasoning(models):
             selected[key] = (rank, row)
     return [entry[1] for entry in selected.values()]
 
-def eligible_models(models):
+def displayed_accuracy(value):
+    """Match AA's whole-percent chart label (round half up)."""
+    return int(value + 0.5)
+
+
+def lineage_key(row):
+    """Return a conservative product-line identity for release replacement.
+
+    AA does not publish a family ID. Its release slugs do consistently separate
+    version/size/date tokens from product descriptors, so remove only tokens
+    that contain version-like digits. Descriptors remain: GPT Sol/Terra/Luna,
+    Gemini Flash/Flash-Lite, GLM/GLM-Flash, and DeepSeek Pro/Flash cannot merge.
+    Creator is included to prevent similarly named products from different labs
+    colliding.
+    """
+    parts = []
+    for token in row["releaseKey"].casefold().split("-"):
+        # qwen3 -> qwen, k3 -> k; pure versions/dates/sizes disappear.
+        token = re.sub(r"\d.*$", "", token)
+        if token and token != "v":
+            parts.append(token)
+    product = "-".join(parts) or row["releaseKey"].casefold()
+    return f'{row.get("creatorSlug", "unknown")}:{product}'
+
+
+def newest_product_lines(models):
+    """Keep only the newest eligible release in each product line."""
+    selected = {}
+    for row in models:
+        family = lineage_key(row)
+        candidate = (row.get("releaseDate") or "", row["releaseKey"])
+        previous = selected.get(family)
+        if previous is None or candidate > previous[0]:
+            selected[family] = (candidate, row)
+    return [entry[1] for entry in selected.values()]
+
+def previous_admitted_releases():
+    try:
+        previous = json.loads((ROOT / "data.json").read_text(encoding="utf-8"))
+    except (OSError, ValueError):
+        return set()
+    admitted = set(previous.get("admittedNewReleases", []))
+    # Migration path from data written before this state field existed.
+    admitted.update(row.get("releaseKey") for row in previous.get("models", [])
+                    if row.get("releaseKey") not in EXISTING_RELEASES)
+    admitted.discard(None)
+    return admitted - EXISTING_RELEASES
+
+def eligible_models(models, previously_admitted=None):
+    # AA's current default selection identifies newly surfaced benchmark models.
     # Select reasoning first; do not substitute a lower effort just to pass.
+    previously_admitted = set(previously_admitted or ())
+    newly_selected_releases = {row["releaseKey"] for row in models
+                               if row.get("chartDefaultSelected")}
     selected = highest_reasoning(models)
-    return [row for row in selected if
-            (row["releaseKey"] in EXISTING_RELEASES and row["rawAccuracy"] >= 27) or
-            (row["releaseDate"] > POLICY_START_DATE and row["rawAccuracy"] > NEW_MODEL_ACCURACY)]
+    newly_qualified = {row["releaseKey"] for row in selected
+                       if row["releaseKey"] not in EXISTING_RELEASES and
+                       row["releaseKey"] in newly_selected_releases and
+                       displayed_accuracy(row["rawAccuracy"]) >= NEW_MODEL_ACCURACY}
+    admitted = previously_admitted | newly_qualified
+    eligible = [row for row in selected if
+                (row["releaseKey"] in EXISTING_RELEASES and row["rawAccuracy"] >= 27) or
+                row["releaseKey"] in admitted]
+    # A new release replaces an older release only after passing admission.
+    # This prevents an unqualified launch from removing a qualifying incumbent.
+    eligible = newest_product_lines(eligible)
+    return eligible, admitted
 
 
 def build():
@@ -140,8 +203,10 @@ def build():
         models.append({
             "model": row.get("shortName") or row["name"],
             "releaseKey": row["releaseKey"],
+            "creatorSlug": row["creatorSlug"],
             "reasoningRank": row["reasoningRank"],
             "releaseDate": row["releaseDate"],
+            "chartDefaultSelected": bool(row.get("chartDefaultSelected")),
             "rawAccuracy": correct,
             "detailsUrl": "https://artificialanalysis.ai/models/" + row["slug"],
             "correct": round(correct, 2),
@@ -156,18 +221,22 @@ def build():
 
     if len(models) < 15:
         raise RuntimeError(f"Only {len(models)} usable model records found; source format may have changed.")
-    models = eligible_models(models)
+    models, admitted = eligible_models(models, previous_admitted_releases())
     for row in models:
         del row["rawAccuracy"]
+        del row["creatorSlug"]
     models.sort(key=lambda row: row["omniscienceIndex"], reverse=True)
     return {
         "source": SOURCE,
         "updatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "modelCount": len(models),
+        "admittedNewReleases": sorted(admitted),
         "admissionPolicy": {
-            "newModelAccuracyMustExceed": NEW_MODEL_ACCURACY,
-            "newModelReleasedAfter": POLICY_START_DATE,
+            "newModelMinimumAccuracy": NEW_MODEL_ACCURACY,
+            "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
+            "newModelSignal": "Newly present in Artificial Analysis default selection",
             "existingModelMinimumAccuracy": 27,
+            "familyReplacement": "Newest eligible AA release date per creator and product line",
         },
         "models": models,
     }
