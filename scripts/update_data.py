@@ -152,11 +152,14 @@ def newest_product_lines(models):
             selected[family] = (candidate, row)
     return [entry[1] for entry in selected.values()]
 
-def previous_admitted_releases():
+def previous_data():
     try:
-        previous = json.loads((ROOT / "data.json").read_text(encoding="utf-8"))
+        return json.loads((ROOT / "data.json").read_text(encoding="utf-8"))
     except (OSError, ValueError):
-        return set()
+        return {}
+
+
+def previous_admitted_releases(previous):
     admitted = set(previous.get("admittedNewReleases", []))
     # Migration path from data written before this state field existed.
     admitted.update(row.get("releaseKey") for row in previous.get("models", [])
@@ -164,16 +167,32 @@ def previous_admitted_releases():
     admitted.discard(None)
     return admitted - EXISTING_RELEASES
 
-def eligible_models(models, previously_admitted=None):
-    # AA's current default selection identifies newly surfaced benchmark models.
-    # Select reasoning first; do not substitute a lower effort just to pass.
-    previously_admitted = set(previously_admitted or ())
-    newly_selected_releases = {row["releaseKey"] for row in models
-                               if row.get("chartDefaultSelected")}
+def eligible_models(models, previous=None):
+    """Admit newly scored releases, while keeping historical non-baseline rows out.
+
+    The first run snapshots AA's complete scored catalogue. After that, any
+    release newly appearing in the full feed is tracked even when AA does not
+    mark it as default-selected. Tracked releases can qualify on a later run if
+    their highest-reasoning score crosses the threshold.
+    """
+    previous = previous or {}
+    previously_admitted = previous_admitted_releases(previous)
     selected = highest_reasoning(models)
-    newly_qualified = {row["releaseKey"] for row in selected
+    current_releases = {row["releaseKey"] for row in selected}
+    known_releases = set(previous.get("seenBenchmarkReleases", []))
+    tracked = set(previous.get("trackedNewReleases", []))
+    if "seenBenchmarkReleases" in previous:
+        tracked.update(current_releases - known_releases - EXISTING_RELEASES)
+    else:
+        # One-time migration: don't retroactively admit hundreds of older
+        # scored models. Preserve the prior default-selection discovery on this
+        # run, then use the full catalogue for every future discovery.
+        tracked.update(row["releaseKey"] for row in selected
                        if row["releaseKey"] not in EXISTING_RELEASES and
-                       row["releaseKey"] in newly_selected_releases and
+                       row.get("chartDefaultSelected") and
+                       displayed_accuracy(row["rawAccuracy"]) >= NEW_MODEL_ACCURACY)
+    newly_qualified = {row["releaseKey"] for row in selected
+                       if row["releaseKey"] in tracked and
                        displayed_accuracy(row["rawAccuracy"]) >= NEW_MODEL_ACCURACY}
     admitted = previously_admitted | newly_qualified
     eligible = [row for row in selected if
@@ -182,10 +201,11 @@ def eligible_models(models, previously_admitted=None):
     # A new release replaces an older release only after passing admission.
     # This prevents an unqualified launch from removing a qualifying incumbent.
     eligible = newest_product_lines(eligible)
-    return eligible, admitted
+    return eligible, admitted, known_releases | current_releases, tracked
 
 
 def build():
+    previous = previous_data()
     page = fetch_page()
     records = source_models(page)
     models = []
@@ -221,25 +241,31 @@ def build():
 
     if len(models) < 15:
         raise RuntimeError(f"Only {len(models)} usable model records found; source format may have changed.")
-    models, admitted = eligible_models(models, previous_admitted_releases())
+    models, admitted, seen, tracked = eligible_models(models, previous)
     for row in models:
         del row["rawAccuracy"]
         del row["creatorSlug"]
     models.sort(key=lambda row: row["omniscienceIndex"], reverse=True)
-    return {
+    payload = {
         "source": SOURCE,
         "updatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
         "modelCount": len(models),
         "admittedNewReleases": sorted(admitted),
+        "seenBenchmarkReleases": sorted(seen),
+        "trackedNewReleases": sorted(tracked),
         "admissionPolicy": {
             "newModelMinimumAccuracy": NEW_MODEL_ACCURACY,
             "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
-            "newModelSignal": "Newly present in Artificial Analysis default selection",
+            "newModelSignal": "New scored releases in the complete AA model feed, tracked across runs",
             "existingModelMinimumAccuracy": 27,
             "familyReplacement": "Newest eligible AA release date per creator and product line",
         },
         "models": models,
     }
+    if {k: v for k, v in payload.items() if k != "updatedAt"} == \
+            {k: v for k, v in previous.items() if k != "updatedAt"}:
+        payload["updatedAt"] = previous["updatedAt"]
+    return payload
 
 
 if __name__ == "__main__":
