@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-09-23T07:57:33.152962Z",
+  "updatedAt": "2026-09-23T19:40:47.693721Z",
   "modelCount": 19,
   "admittedNewReleases": [
     "claude-opus-5-5",
@@ -240,6 +240,7 @@
     "magistral-small",
     "magistral-small-2509",
     "mercury-2",
+    "mercury-2-5",
     "mi-dm-k-2-5-pro-dec28",
     "midm-250-pro-rsnsft",
     "mimo-v2-0206",
@@ -395,6 +396,7 @@
     "gpt-6-luna",
     "gpt-6-sol",
     "grok-4-7",
+    "mercury-2-5",
     "mimo-v2-6-pro"
   ],
   "admissionPolicy": {
