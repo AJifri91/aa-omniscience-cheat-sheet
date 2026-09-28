@@ -1,6 +1,6 @@
 import unittest
 
-from update_data import eligible_models, model_metadata
+from update_data import eligible_models, model_metadata, page_model_metadata
 
 
 def model(release, accuracy, *, effort=4, selected=False, date="2026-09-23"):
@@ -66,6 +66,16 @@ class AdmissionTests(unittest.TestCase):
 
 
 class MetadataRecoveryTests(unittest.TestCase):
+    def test_separate_page_model_and_release_records_are_joined(self):
+        payload = ('7:{"slug":"new-2026","name":"New 2026",'
+                   '"releaseDate":"2026-09-28","creator":{"slug":"lab"}}'
+                   '8:{"slug":"new-2026-high","name":"New 2026 (high)",'
+                   '"releaseSlug":"new-2026"}')
+        metadata = page_model_metadata(payload)
+        self.assertEqual(metadata["new-2026-high"]["release"]["slug"], "new-2026")
+        self.assertEqual(metadata["new-2026-high"]["creator"]["slug"], "lab")
+        self.assertEqual(metadata["new-2026-high"]["releaseDate"], "2026-09-28")
+
     def test_missing_page_entry_recovers_exact_previous_release(self):
         metadata = {
             "claude-opus-5": {
