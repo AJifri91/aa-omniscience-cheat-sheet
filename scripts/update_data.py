@@ -47,6 +47,10 @@ def source_models(page, previous=None):
             continue
         if isinstance(row.get("release"), dict):
             metadata[row["slug"]] = row
+    print(f"AA metadata diagnostics: payload={len(payload)} bytes, "
+          f"slug objects={len(re.findall(r'{\"slug\":', payload))}, "
+          f"release fields={len(re.findall(r'\"release\":', payload))}, "
+          f"parsed={len(metadata)}; sample={list(metadata)[:3]}")
     match = re.search(r'"manifest":(\{[^}]+\})', payload)
     if not match:
         raise RuntimeError("Full-model feed missing; keeping previous data.")
@@ -66,6 +70,7 @@ def source_models(page, previous=None):
         if prior.get("detailsUrl") and prior.get("releaseKey")
     }
     records = []
+    skipped = []
     for row in json.loads(raw)["models"]:
         breakdown = row.get("omniscienceBreakdown")
         if row.get("omniscience") is None or breakdown is None:
@@ -79,7 +84,7 @@ def source_models(page, previous=None):
         if meta is None:
             # An unidentifiable row must not enter the seen-release snapshot.
             # AA may supply its metadata in a later run.
-            print("Skipping scored model with unavailable metadata: " + row["slug"])
+            skipped.append(row["slug"])
             continue
         row["releaseKey"] = meta["release"]["slug"]
         row["creatorSlug"] = (meta.get("creator") or {}).get("slug") or "unknown"
@@ -89,6 +94,9 @@ def source_models(page, previous=None):
                                 meta.get("reasoningRank") or 0)
         row["releaseDate"] = meta.get("releaseDate") or ""
         records.append(row)
+    if skipped:
+        print(f"Skipped {len(skipped)} scored models lacking release identity; "
+              f"sample: {skipped[:10]}")
     if len(records) < 15:
         raise RuntimeError("Complete model records missing; keeping previous data.")
     return records
