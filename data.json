@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-09-27T15:09:57.189383Z",
+  "updatedAt": "2026-09-28T11:10:31.489546Z",
   "modelCount": 19,
   "admittedNewReleases": [
     "claude-opus-5-5",
@@ -412,6 +412,7 @@
     {
       "model": "Claude Opus 5.5 (max with fallback)",
       "releaseKey": "claude-opus-5-5",
+      "creatorSlug": "anthropic",
       "reasoningRank": 6,
       "releaseDate": "2026-09-22",
       "chartDefaultSelected": true,
@@ -428,6 +429,7 @@
     {
       "model": "Claude Fable 5.1 (max with fallback)",
       "releaseKey": "claude-fable-5-1",
+      "creatorSlug": "anthropic",
       "reasoningRank": 6,
       "releaseDate": "2026-09-01",
       "chartDefaultSelected": true,
@@ -444,6 +446,7 @@
     {
       "model": "GPT-6 Astra (max)",
       "releaseKey": "gpt-6-astra",
+      "creatorSlug": "openai",
       "reasoningRank": 6,
       "releaseDate": "2026-09-03",
       "chartDefaultSelected": true,
@@ -460,6 +463,7 @@
     {
       "model": "Grok 4.7 (xhigh)",
       "releaseKey": "grok-4-7",
+      "creatorSlug": "xai",
       "reasoningRank": 5,
       "releaseDate": "2026-09-21",
       "chartDefaultSelected": true,
@@ -476,6 +480,7 @@
     {
       "model": "Gemini 3.8 Flash (high)",
       "releaseKey": "gemini-3-8-flash",
+      "creatorSlug": "google",
       "reasoningRank": 4,
       "releaseDate": "2026-09-02",
       "chartDefaultSelected": true,
@@ -492,6 +497,7 @@
     {
       "model": "GPT-6 Sol (max)",
       "releaseKey": "gpt-6-sol",
+      "creatorSlug": "openai",
       "reasoningRank": 6,
       "releaseDate": "2026-09-22",
       "chartDefaultSelected": true,
@@ -508,6 +514,7 @@
     {
       "model": "Muse Spark 1.3 (max)",
       "releaseKey": "muse-spark-1-3",
+      "creatorSlug": "meta",
       "reasoningRank": 6,
       "releaseDate": "2026-09-02",
       "chartDefaultSelected": true,
@@ -524,6 +531,7 @@
     {
       "model": "Kimi K3 (max)",
       "releaseKey": "kimi-k3",
+      "creatorSlug": "kimi",
       "reasoningRank": 6,
       "releaseDate": "2026-07-16",
       "chartDefaultSelected": true,
@@ -540,6 +548,7 @@
     {
       "model": "Step 5 Preview",
       "releaseKey": "step-5-preview",
+      "creatorSlug": "stepfun",
       "reasoningRank": 0,
       "releaseDate": "2026-09-18",
       "chartDefaultSelected": true,
@@ -556,6 +565,7 @@
     {
       "model": "GLM-5.3 (max)",
       "releaseKey": "glm-5-3",
+      "creatorSlug": "zai",
       "reasoningRank": 6,
       "releaseDate": "2026-08-18",
       "chartDefaultSelected": true,
@@ -572,6 +582,7 @@
     {
       "model": "Qwen3.8 Max (0902)",
       "releaseKey": "qwen3-8-max-0902",
+      "creatorSlug": "alibaba",
       "reasoningRank": 0,
       "releaseDate": "2026-09-02",
       "chartDefaultSelected": true,
@@ -588,6 +599,7 @@
     {
       "model": "MiMo-V2.6-Pro",
       "releaseKey": "mimo-v2-6-pro",
+      "creatorSlug": "xiaomi",
       "reasoningRank": 0,
       "releaseDate": "2026-09-21",
       "chartDefaultSelected": true,
@@ -604,6 +616,7 @@
     {
       "model": "GLM-5.3-Flash",
       "releaseKey": "glm-5-3-flash",
+      "creatorSlug": "zai",
       "reasoningRank": 0,
       "releaseDate": "2026-08-26",
       "chartDefaultSelected": true,
@@ -620,6 +633,7 @@
     {
       "model": "Gemini 3.5 Flash-Lite",
       "releaseKey": "gemini-3-5-flash-lite",
+      "creatorSlug": "google",
       "reasoningRank": 0,
       "releaseDate": "2026-07-21",
       "chartDefaultSelected": true,
@@ -636,6 +650,7 @@
     {
       "model": "Inkling",
       "releaseKey": "inkling",
+      "creatorSlug": "thinking-machines",
       "reasoningRank": 0,
       "releaseDate": "2026-07-15",
       "chartDefaultSelected": true,
@@ -652,6 +667,7 @@
     {
       "model": "DeepSeek V4 Pro 0813 (max)",
       "releaseKey": "deepseek-v4-pro",
+      "creatorSlug": "deepseek",
       "reasoningRank": 6,
       "releaseDate": "2026-08-13",
       "chartDefaultSelected": false,
@@ -668,6 +684,7 @@
     {
       "model": "GPT-6 Luna (max)",
       "releaseKey": "gpt-6-luna",
+      "creatorSlug": "openai",
       "reasoningRank": 6,
       "releaseDate": "2026-09-22",
       "chartDefaultSelected": true,
@@ -684,6 +701,7 @@
     {
       "model": "GPT-5.6 Terra (max)",
       "releaseKey": "gpt-5-6-terra",
+      "creatorSlug": "openai",
       "reasoningRank": 6,
       "releaseDate": "2026-07-09",
       "chartDefaultSelected": false,
@@ -700,6 +718,7 @@
     {
       "model": "DeepSeek V4.1 Flash (max)",
       "releaseKey": "deepseek-v4-1-flash",
+      "creatorSlug": "deepseek",
       "reasoningRank": 6,
       "releaseDate": "2026-09-10",
       "chartDefaultSelected": true,
