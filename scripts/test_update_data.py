@@ -1,6 +1,6 @@
 import unittest
 
-from update_data import eligible_models
+from update_data import eligible_models, model_metadata
 
 
 def model(release, accuracy, *, effort=4, selected=False, date="2026-09-23"):
@@ -63,6 +63,38 @@ class AdmissionTests(unittest.TestCase):
         self.assertEqual(admitted, {"fresh"})
         self.assertEqual(seen, {"historical", "fresh"})
         self.assertEqual(tracked, {"fresh"})
+
+
+class MetadataRecoveryTests(unittest.TestCase):
+    def test_missing_page_entry_recovers_exact_previous_release(self):
+        metadata = {
+            "claude-opus-5": {
+                "release": {"slug": "claude-opus-5"},
+                "creator": {"slug": "anthropic"},
+            }
+        }
+        prior = {"releaseKey": "claude-opus-5-5", "reasoningRank": 6,
+                 "releaseDate": "2026-09-22"}
+        recovered = model_metadata({"slug": "claude-opus-5-5"}, metadata, prior)
+        self.assertEqual(recovered["release"]["slug"], "claude-opus-5-5")
+        self.assertEqual(recovered["creator"]["slug"], "anthropic")
+        self.assertEqual(recovered["reasoningRank"], 6)
+
+    def test_new_row_uses_feed_identity_if_page_metadata_is_missing(self):
+        row = {"slug": "new-model", "release": {"slug": "new-model"},
+               "creator": {"slug": "new-lab"}}
+        self.assertEqual(model_metadata(row, {})["release"]["slug"], "new-model")
+
+    def test_unknown_new_row_is_deferred_without_guessing_family(self):
+        self.assertIsNone(model_metadata({"slug": "new-model"}, {}))
+
+    def test_ambiguous_creator_does_not_replace_prior_release(self):
+        metadata = {
+            "one": {"release": {"slug": "nova-1"}, "creator": {"slug": "lab-one"}},
+            "two": {"release": {"slug": "nova-2"}, "creator": {"slug": "lab-two"}},
+        }
+        prior = {"releaseKey": "nova-3", "reasoningRank": 4}
+        self.assertIsNone(model_metadata({"slug": "nova-3"}, metadata, prior))
 
 
 if __name__ == "__main__":
