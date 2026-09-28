@@ -1,9 +1,10 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-09-28T11:10:31.489546Z",
-  "modelCount": 19,
+  "updatedAt": "2026-09-28T22:00:51.253220Z",
+  "modelCount": 20,
   "admittedNewReleases": [
     "claude-opus-5-5",
+    "claude-sonnet-5-5",
     "gpt-6-luna",
     "gpt-6-sol",
     "grok-4-7",
@@ -36,6 +37,7 @@
     "claude-opus-5-5",
     "claude-sonnet-4-6",
     "claude-sonnet-5",
+    "claude-sonnet-5-5",
     "cogito-v2-1",
     "command-a",
     "command-a-plus",
@@ -394,6 +396,7 @@
   ],
   "trackedNewReleases": [
     "claude-opus-5-5",
+    "claude-sonnet-5-5",
     "gpt-6-luna",
     "gpt-6-sol",
     "grok-4-7",
@@ -458,6 +461,23 @@
       "omniscienceIndex": 43.4,
       "hallucinationRate": 51.34,
       "standardPercent": 71.7,
+      "profile": "Strong knowledge, with meaningful hallucination risk on misses."
+    },
+    {
+      "model": "Claude Sonnet 5.5 (max with fallback)",
+      "releaseKey": "claude-sonnet-5-5",
+      "creatorSlug": "anthropic",
+      "reasoningRank": 6,
+      "releaseDate": "2026-09-28",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-sonnet-5-5",
+      "correct": 53.95,
+      "incorrect": 21.65,
+      "partialAbstain": 24.4,
+      "accuracy": 53.95,
+      "omniscienceIndex": 32.3,
+      "hallucinationRate": 47.01,
+      "standardPercent": 66.15,
       "profile": "Strong knowledge, with meaningful hallucination risk on misses."
     },
     {
