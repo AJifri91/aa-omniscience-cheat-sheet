@@ -29,7 +29,7 @@ def fetch_page():
         return html.unescape(response.read().decode("utf-8"))
 
 
-def source_models(page):
+def source_models(page, previous=None):
     """Read the public full-model feed used by AA's model selector.
 
     AA publishes its data path and decoding key in the page. This follows its
@@ -60,6 +60,11 @@ def source_models(page):
     if manifest.get("key"):
         key = bytes.fromhex(manifest["key"])
         raw = gzip.decompress(AESGCM(key).decrypt(hashlib.sha256(key).digest()[:12], raw, None))
+    previous_by_slug = {
+        prior["detailsUrl"].rsplit("/", 1)[-1]: prior
+        for prior in (previous or {}).get("models", [])
+        if prior.get("detailsUrl") and prior.get("releaseKey")
+    }
     records = []
     for row in json.loads(raw)["models"]:
         breakdown = row.get("omniscienceBreakdown")
@@ -70,12 +75,18 @@ def source_models(page):
             for value in (row["omniscience"], breakdown.get("accuracy"), breakdown.get("hallucinationRate"))
         ):
             raise RuntimeError("Invalid benchmark record: " + row["slug"])
-        meta = metadata[row["slug"]]
+        meta = model_metadata(row, metadata, previous_by_slug.get(row["slug"]))
+        if meta is None:
+            # An unidentifiable row must not enter the seen-release snapshot.
+            # AA may supply its metadata in a later run.
+            print("Skipping scored model with unavailable metadata: " + row["slug"])
+            continue
         row["releaseKey"] = meta["release"]["slug"]
         row["creatorSlug"] = (meta.get("creator") or {}).get("slug") or "unknown"
         effort_match = EFFORT_NOTE.search(row.get("shortName") or row.get("name") or "")
         row["reasoningRank"] = ((meta.get("effort") or {}).get("level") or
-                                (EFFORT[effort_match.group(1).lower()] if effort_match else 0))
+                                (EFFORT[effort_match.group(1).lower()] if effort_match else 0) or
+                                meta.get("reasoningRank") or 0)
         row["releaseDate"] = meta.get("releaseDate") or ""
         records.append(row)
     if len(records) < 15:
@@ -104,6 +115,40 @@ EFFORT = {"minimal": 1, "low": 2, "medium": 3, "high": 4, "xhigh": 5, "max": 6}
 EFFORT_NOTE = re.compile(r"\((minimal|low|medium|high|xhigh|max)(?:\s+with fallback)?\)", re.I)
 
 
+def model_metadata(row, metadata, prior=None):
+    """Use source metadata, then the feed or a previously displayed exact model.
+
+    A new release without enough identity is deferred until AA publishes its
+    metadata. It is never guessed from a slug or marked as seen.
+    """
+    meta = metadata.get(row["slug"])
+    if meta and (meta.get("release") or {}).get("slug"):
+        return meta
+    if isinstance(row.get("release"), dict) and row["release"].get("slug"):
+        return row
+    if not prior:
+        return None
+    release_key = prior["releaseKey"]
+    creator = ((row.get("creator") or {}).get("slug") or prior.get("creatorSlug"))
+    if not creator:
+        # AA's page can omit one scored model while retaining metadata for
+        # other versions of the same product line.
+        candidates = {
+            (entry.get("creator") or {}).get("slug")
+            for entry in metadata.values()
+            if (entry.get("release") or {}).get("slug") and
+            product_key(entry["release"]["slug"]) == product_key(release_key)
+        }
+        candidates.discard(None)
+        if len(candidates) == 1:
+            creator = candidates.pop()
+    if not creator:
+        return None
+    return {"release": {"slug": release_key}, "creator": {"slug": creator},
+            "reasoningRank": prior.get("reasoningRank", 0),
+            "releaseDate": prior.get("releaseDate", "")}
+
+
 def highest_reasoning(models):
     selected = {}
     for row in models:
@@ -121,6 +166,16 @@ def displayed_accuracy(value):
     return int(value + 0.5)
 
 
+def product_key(release_key):
+    """Remove version-like tokens while retaining product descriptors."""
+    parts = []
+    for token in release_key.casefold().split("-"):
+        token = re.sub(r"\d.*$", "", token)
+        if token and token != "v":
+            parts.append(token)
+    return "-".join(parts) or release_key.casefold()
+
+
 def lineage_key(row):
     """Return a conservative product-line identity for release replacement.
 
@@ -131,14 +186,7 @@ def lineage_key(row):
     Creator is included to prevent similarly named products from different labs
     colliding.
     """
-    parts = []
-    for token in row["releaseKey"].casefold().split("-"):
-        # qwen3 -> qwen, k3 -> k; pure versions/dates/sizes disappear.
-        token = re.sub(r"\d.*$", "", token)
-        if token and token != "v":
-            parts.append(token)
-    product = "-".join(parts) or row["releaseKey"].casefold()
-    return f'{row.get("creatorSlug", "unknown")}:{product}'
+    return f'{row.get("creatorSlug", "unknown")}:{product_key(row["releaseKey"])}'
 
 
 def newest_product_lines(models):
@@ -207,7 +255,7 @@ def eligible_models(models, previous=None):
 def build():
     previous = previous_data()
     page = fetch_page()
-    records = source_models(page)
+    records = source_models(page, previous)
     models = []
     for row in records:
         acc = row["omniscienceBreakdown"]["accuracy"]
@@ -244,7 +292,6 @@ def build():
     models, admitted, seen, tracked = eligible_models(models, previous)
     for row in models:
         del row["rawAccuracy"]
-        del row["creatorSlug"]
     models.sort(key=lambda row: row["omniscienceIndex"], reverse=True)
     payload = {
         "source": SOURCE,
