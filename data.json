@@ -1,10 +1,11 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-09-29T20:46:59.748917Z",
-  "modelCount": 20,
+  "updatedAt": "2026-09-30T20:49:02.288400Z",
+  "modelCount": 21,
   "admittedNewReleases": [
     "claude-opus-5-5",
     "claude-sonnet-5-5",
+    "gemini-4-argon",
     "gpt-6-1-sol",
     "gpt-6-luna",
     "gpt-6-sol",
@@ -89,6 +90,7 @@
     "gemini-3-8-flash",
     "gemini-3-flash-preview",
     "gemini-3-pro-preview",
+    "gemini-4-argon",
     "gemma-3-12b-instruct",
     "gemma-3-1b-instruct",
     "gemma-3-270m",
@@ -399,6 +401,7 @@
   "trackedNewReleases": [
     "claude-opus-5-5",
     "claude-sonnet-5-5",
+    "gemini-4-argon",
     "gpt-6-1-sol",
     "gpt-6-luna",
     "gpt-6-sol",
@@ -465,6 +468,23 @@
       "hallucinationRate": 51.34,
       "standardPercent": 71.7,
       "profile": "Strong knowledge, with meaningful hallucination risk on misses."
+    },
+    {
+      "model": "Gemini 4 Argon (high)",
+      "releaseKey": "gemini-4-argon",
+      "creatorSlug": "google",
+      "reasoningRank": 4,
+      "releaseDate": "2026-09-30",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/gemini-4-argon",
+      "correct": 49.9,
+      "incorrect": 7.55,
+      "partialAbstain": 42.55,
+      "accuracy": 49.9,
+      "omniscienceIndex": 42.35,
+      "hallucinationRate": 15.07,
+      "standardPercent": 71.17,
+      "profile": "Frontier reliability: high knowledge with comparatively controlled guessing."
     },
     {
       "model": "GPT-6.1 Sol (max)",
@@ -659,7 +679,7 @@
       "creatorSlug": "google",
       "reasoningRank": 0,
       "releaseDate": "2026-07-21",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/gemini-3-5-flash-lite",
       "correct": 29.47,
       "incorrect": 24.23,
@@ -671,10 +691,10 @@
       "profile": "Conservative and well calibrated, though factual coverage is more limited."
     },
     {
-      "model": "Inkling",
+      "model": "Inkling (xhigh)",
       "releaseKey": "inkling",
       "creatorSlug": "thinking-machines",
-      "reasoningRank": 0,
+      "reasoningRank": 5,
       "releaseDate": "2026-07-15",
       "chartDefaultSelected": true,
       "detailsUrl": "https://artificialanalysis.ai/models/inkling",
