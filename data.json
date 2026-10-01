@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-09-30T20:49:02.288400Z",
+  "updatedAt": "2026-10-01T01:17:39.386357Z",
   "modelCount": 21,
   "admittedNewReleases": [
     "claude-opus-5-5",
@@ -383,6 +383,7 @@
     "sarvam-30b",
     "sarvam-m",
     "seed-oss-36b-instruct",
+    "solar-mini4",
     "solar-open-100b",
     "solar-open2-250b",
     "solar-pro-2",
@@ -408,7 +409,8 @@
     "grok-4-7",
     "mercury-2-5",
     "mimo-v2-6-flash",
-    "mimo-v2-6-pro"
+    "mimo-v2-6-pro",
+    "solar-mini4"
   ],
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
