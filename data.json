@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-01T01:17:39.386357Z",
+  "updatedAt": "2026-10-03T14:43:34.021644Z",
   "modelCount": 21,
   "admittedNewReleases": [
     "claude-opus-5-5",
@@ -223,6 +223,7 @@
     "ling-3-0-flash-fin",
     "ling-3-0-flash-vl",
     "ling-3-0-tiny",
+    "ling-3-1-flash",
     "ling-flash-2-0",
     "ling-mini-2-0",
     "llama-3-1-instruct-405b",
@@ -407,6 +408,7 @@
     "gpt-6-luna",
     "gpt-6-sol",
     "grok-4-7",
+    "ling-3-1-flash",
     "mercury-2-5",
     "mimo-v2-6-flash",
     "mimo-v2-6-pro",
