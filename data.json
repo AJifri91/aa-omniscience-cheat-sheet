@@ -1,8 +1,9 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-06T20:58:42.615213Z",
-  "modelCount": 21,
+  "updatedAt": "2026-10-07T21:18:18.050501Z",
+  "modelCount": 22,
   "admittedNewReleases": [
+    "claude-haiku-5-5",
     "claude-opus-5-5",
     "claude-sonnet-5-5",
     "gemini-4-argon",
@@ -31,6 +32,7 @@
     "claude-4-sonnet",
     "claude-fable-5",
     "claude-fable-5-1",
+    "claude-haiku-5-5",
     "claude-opus-4-5",
     "claude-opus-4-6",
     "claude-opus-4-7",
@@ -402,6 +404,7 @@
     "trinity-large-thinking"
   ],
   "trackedNewReleases": [
+    "claude-haiku-5-5",
     "claude-opus-5-5",
     "claude-sonnet-5-5",
     "gemini-4-argon",
@@ -644,6 +647,23 @@
       "hallucinationRate": 28.84,
       "standardPercent": 55.99,
       "profile": "Conservative and well calibrated, though factual coverage is more limited."
+    },
+    {
+      "model": "Claude Haiku 5.5 (max with fallback)",
+      "releaseKey": "claude-haiku-5-5",
+      "creatorSlug": "anthropic",
+      "reasoningRank": 6,
+      "releaseDate": "2026-10-07",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-haiku-5-5",
+      "correct": 36.38,
+      "incorrect": 25.72,
+      "partialAbstain": 37.9,
+      "accuracy": 36.38,
+      "omniscienceIndex": 10.67,
+      "hallucinationRate": 40.42,
+      "standardPercent": 55.33,
+      "profile": "Positive reliability, but mistakes remain frequent when uncertain."
     },
     {
       "model": "MiMo-V2.6-Pro",
