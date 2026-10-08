@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-07T21:18:18.050501Z",
+  "updatedAt": "2026-10-08T01:55:31.804186Z",
   "modelCount": 22,
   "admittedNewReleases": [
     "claude-haiku-5-5",
@@ -649,7 +649,7 @@
       "profile": "Conservative and well calibrated, though factual coverage is more limited."
     },
     {
-      "model": "Claude Haiku 5.5 (max with fallback)",
+      "model": "Claude Haiku 5.5 (max)",
       "releaseKey": "claude-haiku-5-5",
       "creatorSlug": "anthropic",
       "reasoningRank": 6,
