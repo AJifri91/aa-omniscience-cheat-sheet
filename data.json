@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-16T09:01:39.721744Z",
+  "updatedAt": "2026-10-16T14:51:12.379801Z",
   "modelCount": 25,
   "admittedNewReleases": [
     "claude-haiku-5-5",
@@ -387,6 +387,7 @@
     "qwen3-vl-4b-instruct",
     "qwen3-vl-8b",
     "qwen3-vl-8b-instruct",
+    "reflection-beam",
     "reka-flash-3",
     "ring-1t",
     "ring-2-6-1t",
@@ -431,6 +432,7 @@
     "muse-wonder-full",
     "nemotron-3-5-bolt-74b-a9b",
     "nemotron-3-5-super",
+    "reflection-beam",
     "solar-mini4",
     "solar-pro-4-2026-09-18"
   ],
