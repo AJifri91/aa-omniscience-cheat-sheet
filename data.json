@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-16T00:24:20.858868Z",
+  "updatedAt": "2026-10-16T09:01:39.721744Z",
   "modelCount": 25,
   "admittedNewReleases": [
     "claude-haiku-5-5",
@@ -400,6 +400,7 @@
     "solar-open2-250b",
     "solar-pro-2",
     "solar-pro-3",
+    "solar-pro-4-2026-09-18",
     "solar-pro4",
     "step-3-5-flash",
     "step-3-5-flash-0202",
@@ -430,7 +431,8 @@
     "muse-wonder-full",
     "nemotron-3-5-bolt-74b-a9b",
     "nemotron-3-5-super",
-    "solar-mini4"
+    "solar-mini4",
+    "solar-pro-4-2026-09-18"
   ],
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
