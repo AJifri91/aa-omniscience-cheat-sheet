@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-15T19:53:21.535040Z",
+  "updatedAt": "2026-10-16T00:24:20.858868Z",
   "modelCount": 25,
   "admittedNewReleases": [
     "claude-haiku-5-5",
@@ -616,7 +616,7 @@
       "creatorSlug": "meta",
       "reasoningRank": 6,
       "releaseDate": "2026-09-02",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/muse-spark-1-3",
       "correct": 43.58,
       "incorrect": 18.58,
