@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-16T14:51:12.379801Z",
+  "updatedAt": "2026-10-17T00:28:51.922506Z",
   "modelCount": 25,
   "admittedNewReleases": [
     "claude-haiku-5-5",
@@ -302,6 +302,7 @@
     "nemotron-3-5-bolt-74b-a9b",
     "nemotron-3-5-lightning",
     "nemotron-3-5-super",
+    "nemotron-3-5-super-vl",
     "nemotron-3-nano-omni-30b-a3b",
     "nemotron-3-ultra-550b-a55b",
     "nemotron-cascade-2-30b-a3b",
@@ -432,6 +433,7 @@
     "muse-wonder-full",
     "nemotron-3-5-bolt-74b-a9b",
     "nemotron-3-5-super",
+    "nemotron-3-5-super-vl",
     "reflection-beam",
     "solar-mini4",
     "solar-pro-4-2026-09-18"
