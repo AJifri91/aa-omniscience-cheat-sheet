@@ -1,7 +1,7 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-19T09:53:38.088194Z",
-  "modelCount": 25,
+  "updatedAt": "2026-10-19T16:59:12.737045Z",
+  "modelCount": 26,
   "admittedNewReleases": [
     "claude-haiku-5-5",
     "claude-opus-5-5",
@@ -13,6 +13,7 @@
     "gpt-6-sol",
     "grok-4-7",
     "mimo-v2-6-pro",
+    "minimax-m3-1-flash",
     "muse-spark-open",
     "muse-wonder",
     "muse-wonder-full"
@@ -275,6 +276,7 @@
     "minimax-m2-5",
     "minimax-m2-7",
     "minimax-m3",
+    "minimax-m3-1-flash",
     "ministral-3-14b",
     "ministral-3-3b",
     "ministral-3-8b",
@@ -430,6 +432,7 @@
     "mercury-2-5",
     "mimo-v2-6-flash",
     "mimo-v2-6-pro",
+    "minimax-m3-1-flash",
     "mistral-large-4",
     "muse-spark-open",
     "muse-wonder",
@@ -685,6 +688,23 @@
       "omniscienceIndex": 16.38,
       "hallucinationRate": 43.02,
       "standardPercent": 58.19,
+      "profile": "Positive reliability, but mistakes remain frequent when uncertain."
+    },
+    {
+      "model": "MiniMax-M3.1-Flash",
+      "releaseKey": "minimax-m3-1-flash",
+      "creatorSlug": "minimax",
+      "reasoningRank": 0,
+      "releaseDate": "2026-10-19",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/minimax-m3-1-flash",
+      "correct": 56.2,
+      "incorrect": 40.65,
+      "partialAbstain": 3.15,
+      "accuracy": 56.2,
+      "omniscienceIndex": 15.55,
+      "hallucinationRate": 92.81,
+      "standardPercent": 57.77,
       "profile": "Positive reliability, but mistakes remain frequent when uncertain."
     },
     {
