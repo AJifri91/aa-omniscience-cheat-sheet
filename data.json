@@ -1,11 +1,12 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-17T00:28:51.922506Z",
+  "updatedAt": "2026-10-19T09:53:38.088194Z",
   "modelCount": 25,
   "admittedNewReleases": [
     "claude-haiku-5-5",
     "claude-opus-5-5",
     "claude-sonnet-5-5",
+    "deepseek-v4-1-flash-1017",
     "gemini-4-argon",
     "gpt-6-1-sol",
     "gpt-6-luna",
@@ -60,6 +61,7 @@
     "deepseek-v3-2-0925",
     "deepseek-v3-2-speciale",
     "deepseek-v4-1-flash",
+    "deepseek-v4-1-flash-1017",
     "deepseek-v4-flash",
     "deepseek-v4-flash-0420",
     "deepseek-v4-flash-vision",
@@ -418,6 +420,7 @@
     "claude-haiku-5-5",
     "claude-opus-5-5",
     "claude-sonnet-5-5",
+    "deepseek-v4-1-flash-1017",
     "gemini-4-argon",
     "gpt-6-1-sol",
     "gpt-6-luna",
@@ -787,6 +790,23 @@
       "profile": "Conservative and well calibrated, though factual coverage is more limited."
     },
     {
+      "model": "DeepSeek V4.1 Flash 1017 (max)",
+      "releaseKey": "deepseek-v4-1-flash-1017",
+      "creatorSlug": "deepseek",
+      "reasoningRank": 6,
+      "releaseDate": "2026-10-17",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/deepseek-v4-1-flash-1017",
+      "correct": 42.85,
+      "incorrect": 38.15,
+      "partialAbstain": 19.0,
+      "accuracy": 42.85,
+      "omniscienceIndex": 4.7,
+      "hallucinationRate": 66.75,
+      "standardPercent": 52.35,
+      "profile": "Positive reliability, but mistakes remain frequent when uncertain."
+    },
+    {
       "model": "Inkling (xhigh)",
       "releaseKey": "inkling",
       "creatorSlug": "thinking-machines",
@@ -853,23 +873,6 @@
       "hallucinationRate": 87.88,
       "standardPercent": 50.02,
       "profile": "Positive reliability, but mistakes remain frequent when uncertain."
-    },
-    {
-      "model": "DeepSeek V4.1 Flash (max)",
-      "releaseKey": "deepseek-v4-1-flash",
-      "creatorSlug": "deepseek",
-      "reasoningRank": 6,
-      "releaseDate": "2026-09-10",
-      "chartDefaultSelected": true,
-      "detailsUrl": "https://artificialanalysis.ai/models/deepseek-v4-1-flash",
-      "correct": 46.4,
-      "incorrect": 51.7,
-      "partialAbstain": 1.9,
-      "accuracy": 46.4,
-      "omniscienceIndex": -5.3,
-      "hallucinationRate": 96.46,
-      "standardPercent": 47.35,
-      "profile": "Negative reliability: more confidently wrong answers than correct answers."
     }
   ]
 }
