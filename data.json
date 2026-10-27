@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-23T19:57:10.134033Z",
+  "updatedAt": "2026-10-27T01:28:36.594345Z",
   "modelCount": 27,
   "admittedNewReleases": [
     "claude-haiku-5-5",
@@ -9,6 +9,7 @@
     "deepseek-v4-1-flash-1017",
     "gemini-4-argon",
     "gpt-6-1-sol",
+    "gpt-6-1-terra",
     "gpt-6-luna",
     "gpt-6-sol",
     "grok-4-7",
@@ -152,6 +153,7 @@
     "gpt-5-mini",
     "gpt-5-nano",
     "gpt-6-1-sol",
+    "gpt-6-1-terra",
     "gpt-6-astra",
     "gpt-6-luna",
     "gpt-6-sol",
@@ -428,6 +430,7 @@
     "deepseek-v4-1-flash-1017",
     "gemini-4-argon",
     "gpt-6-1-sol",
+    "gpt-6-1-terra",
     "gpt-6-luna",
     "gpt-6-sol",
     "grok-4-7",
@@ -591,6 +594,23 @@
       "omniscienceIndex": 30.15,
       "hallucinationRate": 23.01,
       "standardPercent": 65.08,
+      "profile": "Well calibrated: solid knowledge and relatively honest abstention."
+    },
+    {
+      "model": "GPT-6.1 Terra (max)",
+      "releaseKey": "gpt-6-1-terra",
+      "creatorSlug": "openai",
+      "reasoningRank": 6,
+      "releaseDate": "2026-10-26",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/gpt-6-1-terra",
+      "correct": 49.13,
+      "incorrect": 19.35,
+      "partialAbstain": 31.52,
+      "accuracy": 49.13,
+      "omniscienceIndex": 29.78,
+      "hallucinationRate": 38.04,
+      "standardPercent": 64.89,
       "profile": "Well calibrated: solid knowledge and relatively honest abstention."
     },
     {
@@ -803,7 +823,7 @@
       "creatorSlug": "zai",
       "reasoningRank": 0,
       "releaseDate": "2026-08-26",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/glm-5-3-flash",
       "correct": 27.5,
       "incorrect": 20.03,
@@ -897,23 +917,6 @@
       "omniscienceIndex": 0.65,
       "hallucinationRate": 76.73,
       "standardPercent": 50.33,
-      "profile": "Positive reliability, but mistakes remain frequent when uncertain."
-    },
-    {
-      "model": "GPT-5.6 Terra (max)",
-      "releaseKey": "gpt-5-6-terra",
-      "creatorSlug": "openai",
-      "reasoningRank": 6,
-      "releaseDate": "2026-07-09",
-      "chartDefaultSelected": false,
-      "detailsUrl": "https://artificialanalysis.ai/models/gpt-5-6-terra",
-      "correct": 46.8,
-      "incorrect": 46.75,
-      "partialAbstain": 6.45,
-      "accuracy": 46.8,
-      "omniscienceIndex": 0.05,
-      "hallucinationRate": 87.88,
-      "standardPercent": 50.02,
       "profile": "Positive reliability, but mistakes remain frequent when uncertain."
     }
   ]
