@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-28T21:04:10.362770Z",
+  "updatedAt": "2026-10-29T10:53:44.209987Z",
   "modelCount": 27,
   "admittedNewReleases": [
     "claude-haiku-5-5",
@@ -291,6 +291,7 @@
     "mistral-large-2",
     "mistral-large-3",
     "mistral-large-4",
+    "mistral-large-4-preview",
     "mistral-medium-3",
     "mistral-medium-3-1",
     "mistral-medium-3-5",
@@ -445,6 +446,7 @@
     "mimo-v2-6-pro",
     "minimax-m3-1-flash",
     "mistral-large-4",
+    "mistral-large-4-preview",
     "muse-spark-open",
     "muse-wonder",
     "muse-wonder-full",
