@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-10-29T10:53:44.209987Z",
+  "updatedAt": "2026-11-02T12:23:52.064265Z",
   "modelCount": 27,
   "admittedNewReleases": [
     "claude-haiku-5-5",
@@ -311,6 +311,7 @@
     "muse-wonder",
     "muse-wonder-full",
     "nanbeige4-1-3b",
+    "nanbeige4-3-33b",
     "nemotron-3-5-bolt-74b-a9b",
     "nemotron-3-5-lightning",
     "nemotron-3-5-super",
@@ -450,6 +451,7 @@
     "muse-spark-open",
     "muse-wonder",
     "muse-wonder-full",
+    "nanbeige4-3-33b",
     "nemotron-3-5-bolt-74b-a9b",
     "nemotron-3-5-super",
     "nemotron-3-5-super-vl",
