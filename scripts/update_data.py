@@ -1,128 +1,121 @@
 #!/usr/bin/env python3
-import html
-import gzip
-import hashlib
+"""Refresh data.json with the latest AA-Omniscience results.
+
+Pipeline:
+  aa_source.load_records()   read and validate AA's data (the only AA-specific code)
+  build()                    derive metrics, apply admission rules
+  check_changes()            block suspicious mass changes (sanity guard)
+  write                      data.json (what the site shows) + state.json (admission history)
+
+Run `python scripts/update_data.py --help` for options such as --dry-run and
+--from-snapshot. See README.md for the full picture.
+"""
+import argparse
 import json
-import re
+import os
+import sys
+import traceback
 from datetime import datetime, timezone
 from pathlib import Path
-from urllib.request import Request, urlopen
-from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-SOURCE = "https://artificialanalysis.ai/evaluations/omniscience"
+import aa_source
+from aa_source import EFFORT, EFFORT_NOTE, SourceError, product_key
+
 ROOT = Path(__file__).resolve().parents[1]
-NEW_MODEL_ACCURACY = 35
-# Models already displayed when the 35% admission rule was introduced.
-# Their original 27% minimum remains in effect; new releases use 35%.
-EXISTING_RELEASES = {
-    "claude-fable-5-1", "gpt-6-astra", "claude-fable-5", "claude-opus-5",
-    "grok-4-6", "gemini-3-8-flash", "muse-spark-1-3", "gpt-5-6-sol",
-    "kimi-k3", "step-5-preview", "glm-5-3", "qwen3-8-max-0902",
-    "glm-5-3-flash", "gemini-3-5-flash-lite", "inkling", "deepseek-v4-pro",
-    "gpt-5-6-terra", "deepseek-v4-1-flash", "gpt-5-6-luna",
-}
+CONFIG_FILE = "config.json"
+DATA_FILE = "data.json"
+STATE_FILE = "state.json"
+STATE_KEYS = ("admittedNewReleases", "seenBenchmarkReleases", "trackedNewReleases")
 
 
-def fetch_page():
-    req = Request(SOURCE, headers={"User-Agent": "Mozilla/5.0 AA-Omniscience-Cheat-Sheet/1.0"})
-    with urlopen(req, timeout=45) as response:
-        return html.unescape(response.read().decode("utf-8"))
+class UpdateError(RuntimeError):
+    """The update cannot proceed safely. Nothing is written."""
 
 
-def page_model_metadata(payload):
-    """Join the page's model entries to its separate release catalogue."""
-    decoder = json.JSONDecoder()
-    releases = {}
-    variants = {}
-    for match in re.finditer(r'\{"slug":', payload):
-        try:
-            entry, _ = decoder.raw_decode(payload, match.start())
-        except ValueError:
-            continue
-        slug = entry.get("slug")
-        if not isinstance(slug, str):
-            continue
-        if isinstance(entry.get("releaseSlug"), str):
-            variants[slug] = entry
-        elif isinstance(entry.get("creator"), dict) and entry.get("releaseDate"):
-            releases[slug] = entry
-    metadata = {}
-    for slug, variant in variants.items():
-        release_slug = variant["releaseSlug"]
-        release = releases.get(release_slug, {})
-        creator = variant.get("creator") or release.get("creator")
-        if not isinstance(creator, dict) or not creator.get("slug"):
-            continue
-        metadata[slug] = {
-            "release": {"slug": release_slug},
-            "creator": creator,
-            "releaseDate": variant.get("releaseDate") or release.get("releaseDate") or "",
-            "effort": variant.get("effort"),
-        }
-    return metadata
+class StateError(UpdateError):
+    """Stored data or admission history is missing or unreadable."""
 
 
-def source_models(page, previous=None):
-    """Read the public full-model feed used by AA's model selector.
+class GuardError(UpdateError):
+    """The new data differs from the published data more than the guard allows."""
 
-    AA publishes its data path and decoding key in the page. This follows its
-    public client loader: AES-GCM, SHA256(key)[:12] nonce, then gzip + JSON.
-    Never fall back to the default selection: that silently omits new models.
+
+# --------------------------------------------------------------------------
+# Configuration and stored state
+# --------------------------------------------------------------------------
+
+def load_config(path=None):
+    path = Path(path) if path else ROOT / CONFIG_FILE
+    try:
+        config = json.loads(Path(path).read_text(encoding="utf-8"))
+        admission, guards = config["admission"], config["guards"]
+        int(admission["newModelMinimumAccuracy"]), int(admission["grandfatheredMinimumAccuracy"])
+        if not all(isinstance(item, str) for item in admission["grandfatheredReleases"]):
+            raise TypeError("grandfatheredReleases must be a list of release slugs")
+        for key in ("minimumModels", "maxRemovedModels", "maxAddedModels", "maxChangedModels",
+                    "changedAccuracyPoints", "changedIndexPoints"):
+            float(guards[key])
+    except (OSError, ValueError, KeyError, TypeError) as exc:
+        raise UpdateError(f"{path} is missing or invalid ({exc}).") from exc
+    return config
+
+
+def _read_json(path, what):
+    try:
+        return json.loads(Path(path).read_text(encoding="utf-8"))
+    except (OSError, ValueError) as exc:
+        raise StateError(f"{path.name} exists but cannot be read ({exc}). Restore it from git "
+                         f"history; refusing to continue, because a silent reset would {what}.") from exc
+
+
+def load_previous(root=None, bootstrap=False):
+    """Return (published data, admission state, where the state came from).
+
+    Fails loudly instead of silently starting over: an empty history would
+    re-run the one-time migration, dropping admitted models for good.
     """
-    chunks = re.finditer(r'self\.__next_f\.push\(\[1,("(?:\\.|[^"\\])*")\]\)', page)
-    payload = "".join(json.loads(match.group(1)) for match in chunks)
-    metadata = page_model_metadata(payload)
-    print(f"AA page identities: {len(metadata)} models")
-    match = re.search(r'"manifest":(\{[^}]+\})', payload)
-    if not match:
-        raise RuntimeError("Full-model feed missing; keeping previous data.")
-    manifest = json.loads(match.group(1))
-    if not re.fullmatch(r"/data/[a-zA-Z0-9._/-]+", manifest["path"]):
-        raise RuntimeError("Unexpected model-feed path.")
-    request = Request("https://artificialanalysis.ai" + manifest["path"],
-                      headers={"User-Agent": "Mozilla/5.0 AA-Omniscience-Cheat-Sheet/1.0"})
-    with urlopen(request, timeout=60) as response:
-        raw = response.read()
-    if manifest.get("key"):
-        key = bytes.fromhex(manifest["key"])
-        raw = gzip.decompress(AESGCM(key).decrypt(hashlib.sha256(key).digest()[:12], raw, None))
-    previous_by_slug = {
-        prior["detailsUrl"].rsplit("/", 1)[-1]: prior
-        for prior in (previous or {}).get("models", [])
-        if prior.get("detailsUrl") and prior.get("releaseKey")
-    }
-    records = []
-    skipped = []
-    for row in json.loads(raw)["models"]:
-        breakdown = row.get("omniscienceBreakdown")
-        if row.get("omniscience") is None or breakdown is None:
-            continue  # AA has not published this model's benchmark yet.
-        if not isinstance(breakdown, dict) or not all(
-            isinstance(value, (int, float)) and not isinstance(value, bool)
-            for value in (row["omniscience"], breakdown.get("accuracy"), breakdown.get("hallucinationRate"))
-        ):
-            raise RuntimeError("Invalid benchmark record: " + row["slug"])
-        meta = model_metadata(row, metadata, previous_by_slug.get(row["slug"]))
-        if meta is None:
-            # An unidentifiable row must not enter the seen-release snapshot.
-            # AA may supply its metadata in a later run.
-            skipped.append(row["slug"])
-            continue
-        row["releaseKey"] = meta["release"]["slug"]
-        row["creatorSlug"] = (meta.get("creator") or {}).get("slug") or "unknown"
-        effort_match = EFFORT_NOTE.search(row.get("shortName") or row.get("name") or "")
-        row["reasoningRank"] = ((meta.get("effort") or {}).get("level") or
-                                (EFFORT[effort_match.group(1).lower()] if effort_match else 0) or
-                                meta.get("reasoningRank") or 0)
-        row["releaseDate"] = meta.get("releaseDate") or ""
-        records.append(row)
-    if skipped:
-        print(f"Skipped {len(skipped)} scored models lacking release identity; "
-              f"sample: {skipped[:10]}")
-    if len(records) < 15:
-        raise RuntimeError("Complete model records missing; keeping previous data.")
-    return records
+    root = Path(root) if root else ROOT
+    data_path, state_path = root / DATA_FILE, root / STATE_FILE
+    data = {}
+    if data_path.exists():
+        data = _read_json(data_path, "change which models are shown")
+        if not isinstance(data, dict) or not isinstance(data.get("models", []), list):
+            raise StateError(f"{DATA_FILE} does not have the expected shape (an object with a 'models' list).")
+    elif not bootstrap:
+        raise StateError(f"{DATA_FILE} is missing. Restore it from git history, or run with --bootstrap "
+                         "to start a brand-new tracker.")
 
+    if state_path.exists():
+        state = _read_json(state_path, "drop admitted models permanently")
+        source = STATE_FILE
+    elif "seenBenchmarkReleases" in data:
+        state = {key: data.get(key, []) for key in STATE_KEYS}
+        source = f"{DATA_FILE} (one-time move to {STATE_FILE})"
+    elif bootstrap:
+        return data, {}, "bootstrap (empty history)"
+    else:
+        raise StateError(f"{STATE_FILE} is missing and {DATA_FILE} holds no admission history. "
+                         f"Restore {STATE_FILE} from git history; use --bootstrap only for a brand-new tracker.")
+
+    if not isinstance(state, dict) or any(
+            not isinstance(state.get(key), list) or not all(isinstance(item, str) for item in state[key])
+            for key in STATE_KEYS):
+        raise StateError(f"Admission history from {source} is incomplete: it needs lists of release "
+                         f"slugs for {', '.join(STATE_KEYS)}.")
+    return data, {key: state[key] for key in STATE_KEYS}, source
+
+
+def write_json(path, payload):
+    path = Path(path)
+    path.parent.mkdir(parents=True, exist_ok=True)
+    temporary = path.with_name(path.name + ".tmp")
+    temporary.write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
+    temporary.replace(path)
+
+
+# --------------------------------------------------------------------------
+# Metrics and admission rules
+# --------------------------------------------------------------------------
 
 def profile(acc, oi, hr):
     if oi >= 35 and hr <= 0.5:
@@ -140,43 +133,34 @@ def profile(acc, oi, hr):
     return "Negative reliability: more confidently wrong answers than correct answers."
 
 
-# Only effort annotations are removed; model versions, sizes and dates stay distinct.
-EFFORT = {"minimal": 1, "low": 2, "medium": 3, "high": 4, "xhigh": 5, "max": 6}
-EFFORT_NOTE = re.compile(r"\((minimal|low|medium|high|xhigh|max)(?:\s+with fallback)?\)", re.I)
-
-
-def model_metadata(row, metadata, prior=None):
-    """Use source metadata, then the feed or a previously displayed exact model.
-
-    A new release without enough identity is deferred until AA publishes its
-    metadata. It is never guessed from a slug or marked as seen.
-    """
-    meta = metadata.get(row["slug"])
-    if meta and (meta.get("release") or {}).get("slug"):
-        return meta
-    if isinstance(row.get("release"), dict) and row["release"].get("slug"):
-        return row
-    if not prior:
-        return None
-    release_key = prior["releaseKey"]
-    creator = ((row.get("creator") or {}).get("slug") or prior.get("creatorSlug"))
-    if not creator:
-        # AA's page can omit one scored model while retaining metadata for
-        # other versions of the same product line.
-        candidates = {
-            (entry.get("creator") or {}).get("slug")
-            for entry in metadata.values()
-            if (entry.get("release") or {}).get("slug") and
-            product_key(entry["release"]["slug"]) == product_key(release_key)
-        }
-        candidates.discard(None)
-        if len(candidates) == 1:
-            creator = candidates.pop()
-    if not creator:
-        return None
-    return {"release": {"slug": release_key}, "creator": {"slug": creator},
-            "reasoningRank": prior.get("reasoningRank", 0),
-            "releaseDate": prior.get("releaseDate", "")}
+def model_row(record):
+    """Derive the published metrics for one validated AA record."""
+    acc, oi, hr = record["accuracy"], record["omniscience"], record["hallucinationRate"]
+    # OI = c - i and HR = i / (i + p + a) = i / (100 - c), so OI = c - HR * (100 - c).
+    if abs((acc * 100 - hr * (100 - acc * 100)) - oi) > 0.1:
+        raise UpdateError(f"Inconsistent benchmark metrics for {record['slug']}: accuracy, hallucination "
+                          "rate and Omniscience Index no longer agree. AA may have changed what a field means.")
+    correct = acc * 100
+    incorrect = correct - oi
+    partial_abstain = 100 - correct - incorrect
+    return {
+        "model": record["name"],
+        "releaseKey": record["releaseKey"],
+        "creatorSlug": record["creatorSlug"],
+        "reasoningRank": record["reasoningRank"],
+        "releaseDate": record["releaseDate"],
+        "chartDefaultSelected": record["chartDefaultSelected"],
+        "rawAccuracy": correct,
+        "detailsUrl": "https://artificialanalysis.ai/models/" + record["slug"],
+        "correct": round(correct, 2),
+        "incorrect": round(incorrect, 2),
+        "partialAbstain": round(partial_abstain, 2),
+        "accuracy": round(acc * 100, 2),
+        "omniscienceIndex": round(oi, 2),
+        "hallucinationRate": round(hr * 100, 2),
+        "standardPercent": round((oi / 2) + 50, 2),
+        "profile": profile(acc, oi, hr),
+    }
 
 
 def highest_reasoning(models):
@@ -191,19 +175,10 @@ def highest_reasoning(models):
             selected[key] = (rank, row)
     return [entry[1] for entry in selected.values()]
 
+
 def displayed_accuracy(value):
     """Match AA's whole-percent chart label (round half up)."""
     return int(value + 0.5)
-
-
-def product_key(release_key):
-    """Remove version-like tokens while retaining product descriptors."""
-    parts = []
-    for token in release_key.casefold().split("-"):
-        token = re.sub(r"\d.*$", "", token)
-        if token and token != "v":
-            parts.append(token)
-    return "-".join(parts) or release_key.casefold()
 
 
 def lineage_key(row):
@@ -230,22 +205,17 @@ def newest_product_lines(models):
             selected[family] = (candidate, row)
     return [entry[1] for entry in selected.values()]
 
-def previous_data():
-    try:
-        return json.loads((ROOT / "data.json").read_text(encoding="utf-8"))
-    except (OSError, ValueError):
-        return {}
 
-
-def previous_admitted_releases(previous):
+def previous_admitted_releases(previous, grandfathered):
     admitted = set(previous.get("admittedNewReleases", []))
-    # Migration path from data written before this state field existed.
+    # Anything already displayed (and not grandfathered) was admitted earlier.
     admitted.update(row.get("releaseKey") for row in previous.get("models", [])
-                    if row.get("releaseKey") not in EXISTING_RELEASES)
+                    if row.get("releaseKey") not in grandfathered)
     admitted.discard(None)
-    return admitted - EXISTING_RELEASES
+    return admitted - grandfathered
 
-def eligible_models(models, previous=None):
+
+def eligible_models(models, previous=None, policy=None):
     """Admit newly scored releases, while keeping historical non-baseline rows out.
 
     The first run snapshots AA's complete scored catalogue. After that, any
@@ -253,28 +223,32 @@ def eligible_models(models, previous=None):
     mark it as default-selected. Tracked releases can qualify on a later run if
     their highest-reasoning score crosses the threshold.
     """
+    policy = policy or load_config()["admission"]
+    grandfathered = set(policy["grandfatheredReleases"])
+    new_minimum = policy["newModelMinimumAccuracy"]
     previous = previous or {}
-    previously_admitted = previous_admitted_releases(previous)
+    previously_admitted = previous_admitted_releases(previous, grandfathered)
     selected = highest_reasoning(models)
     current_releases = {row["releaseKey"] for row in selected}
     known_releases = set(previous.get("seenBenchmarkReleases", []))
     tracked = set(previous.get("trackedNewReleases", []))
     if "seenBenchmarkReleases" in previous:
-        tracked.update(current_releases - known_releases - EXISTING_RELEASES)
+        tracked.update(current_releases - known_releases - grandfathered)
     else:
-        # One-time migration: don't retroactively admit hundreds of older
-        # scored models. Preserve the prior default-selection discovery on this
-        # run, then use the full catalogue for every future discovery.
+        # First run of a brand-new tracker (--bootstrap only): don't admit
+        # hundreds of older scored models. Start from AA's default chart
+        # selection, then use the full catalogue for every future discovery.
         tracked.update(row["releaseKey"] for row in selected
-                       if row["releaseKey"] not in EXISTING_RELEASES and
+                       if row["releaseKey"] not in grandfathered and
                        row.get("chartDefaultSelected") and
-                       displayed_accuracy(row["rawAccuracy"]) >= NEW_MODEL_ACCURACY)
+                       displayed_accuracy(row["rawAccuracy"]) >= new_minimum)
     newly_qualified = {row["releaseKey"] for row in selected
                        if row["releaseKey"] in tracked and
-                       displayed_accuracy(row["rawAccuracy"]) >= NEW_MODEL_ACCURACY}
+                       displayed_accuracy(row["rawAccuracy"]) >= new_minimum}
     admitted = previously_admitted | newly_qualified
     eligible = [row for row in selected if
-                (row["releaseKey"] in EXISTING_RELEASES and row["rawAccuracy"] >= 27) or
+                (row["releaseKey"] in grandfathered and
+                 row["rawAccuracy"] >= policy["grandfatheredMinimumAccuracy"]) or
                 row["releaseKey"] in admitted]
     # A new release replaces an older release only after passing admission.
     # This prevents an unqualified launch from removing a qualifying incumbent.
@@ -282,70 +256,183 @@ def eligible_models(models, previous=None):
     return eligible, admitted, known_releases | current_releases, tracked
 
 
-def build():
-    previous = previous_data()
-    page = fetch_page()
-    records = source_models(page, previous)
-    models = []
-    for row in records:
-        acc = row["omniscienceBreakdown"]["accuracy"]
-        oi = row["omniscience"]
-        hr = row["omniscienceBreakdown"]["hallucinationRate"]
-        if not (0 <= acc <= 1 and -100 <= oi <= 100 and 0 <= hr <= 1):
-            raise RuntimeError("Invalid benchmark values for " + row["slug"])
-        if abs((acc * 100 - hr * (100 - acc * 100)) - oi) > 0.1:
-            raise RuntimeError("Inconsistent benchmark metrics for " + row["slug"])
-        correct = acc * 100
-        incorrect = correct - oi
-        partial_abstain = 100 - correct - incorrect
-        models.append({
-            "model": row.get("shortName") or row["name"],
-            "releaseKey": row["releaseKey"],
-            "creatorSlug": row["creatorSlug"],
-            "reasoningRank": row["reasoningRank"],
-            "releaseDate": row["releaseDate"],
-            "chartDefaultSelected": bool(row.get("chartDefaultSelected")),
-            "rawAccuracy": correct,
-            "detailsUrl": "https://artificialanalysis.ai/models/" + row["slug"],
-            "correct": round(correct, 2),
-            "incorrect": round(incorrect, 2),
-            "partialAbstain": round(partial_abstain, 2),
-            "accuracy": round(acc * 100, 2),
-            "omniscienceIndex": round(oi, 2),
-            "hallucinationRate": round(hr * 100, 2),
-            "standardPercent": round((oi / 2) + 50, 2),
-            "profile": profile(acc, oi, hr),
-        })
+def admission_policy(policy):
+    return {
+        "newModelMinimumAccuracy": policy["newModelMinimumAccuracy"],
+        "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
+        "newModelSignal": "New scored releases in the complete AA model feed, tracked across runs",
+        "existingModelMinimumAccuracy": policy["grandfatheredMinimumAccuracy"],
+        "familyReplacement": "Newest eligible AA release date per creator and product line",
+    }
 
-    if len(models) < 15:
-        raise RuntimeError(f"Only {len(models)} usable model records found; source format may have changed.")
-    models, admitted, seen, tracked = eligible_models(models, previous)
+
+def build(records, previous_data, state, config, now=None):
+    """Return (data.json payload, state.json payload) for validated AA records."""
+    policy, guards = config["admission"], config["guards"]
+    models = [model_row(record) for record in records]
+    if len(models) < guards["minimumModels"]:
+        raise UpdateError(f"Only {len(models)} usable model records found; source format may have changed.")
+    previous = {**state, "models": previous_data.get("models", [])}
+    models, admitted, seen, tracked = eligible_models(models, previous, policy)
     for row in models:
         del row["rawAccuracy"]
     models.sort(key=lambda row: row["omniscienceIndex"], reverse=True)
+    now = now or datetime.now(timezone.utc)
     payload = {
-        "source": SOURCE,
-        "updatedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+        "source": aa_source.SOURCE_URL,
+        "updatedAt": now.isoformat().replace("+00:00", "Z"),
         "modelCount": len(models),
+        "admissionPolicy": admission_policy(policy),
+        "models": models,
+    }
+    unchanged = ({k: v for k, v in payload.items() if k != "updatedAt"} ==
+                 {k: v for k, v in previous_data.items() if k != "updatedAt"})
+    if unchanged and previous_data.get("updatedAt"):
+        # updatedAt means "data last changed", so a quiet run changes nothing.
+        payload["updatedAt"] = previous_data["updatedAt"]
+    new_state = {
         "admittedNewReleases": sorted(admitted),
         "seenBenchmarkReleases": sorted(seen),
         "trackedNewReleases": sorted(tracked),
-        "admissionPolicy": {
-            "newModelMinimumAccuracy": NEW_MODEL_ACCURACY,
-            "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
-            "newModelSignal": "New scored releases in the complete AA model feed, tracked across runs",
-            "existingModelMinimumAccuracy": 27,
-            "familyReplacement": "Newest eligible AA release date per creator and product line",
-        },
-        "models": models,
     }
-    if {k: v for k, v in payload.items() if k != "updatedAt"} == \
-            {k: v for k, v in previous.items() if k != "updatedAt"}:
-        payload["updatedAt"] = previous["updatedAt"]
-    return payload
+    return payload, new_state
+
+
+# --------------------------------------------------------------------------
+# Sanity guard
+# --------------------------------------------------------------------------
+
+def check_changes(previous_models, new_models, guards):
+    """Compare published and new models. Return (summary lines, guard problems)."""
+    old_lines = {lineage_key(m): m for m in previous_models if m.get("releaseKey")}
+    new_lines = {lineage_key(m): m for m in new_models}
+    removed = [m["model"] for key, m in old_lines.items() if key not in new_lines]
+    added = [m["model"] for key, m in new_lines.items() if key not in old_lines]
+    replaced = [f'{old_lines[key]["model"]} → {m["model"]}' for key, m in new_lines.items()
+                if key in old_lines and old_lines[key]["detailsUrl"] != m["detailsUrl"]]
+    old_by_url = {m["detailsUrl"]: m for m in previous_models if m.get("detailsUrl")}
+    rescored = []
+    for m in new_models:
+        old = old_by_url.get(m["detailsUrl"])
+        if old is None:
+            continue
+        accuracy_move = abs(m["accuracy"] - old.get("accuracy", m["accuracy"]))
+        index_move = abs(m["omniscienceIndex"] - old.get("omniscienceIndex", m["omniscienceIndex"]))
+        if accuracy_move > guards["changedAccuracyPoints"] or index_move > guards["changedIndexPoints"]:
+            rescored.append(f'{m["model"]} (accuracy {old.get("accuracy")} → {m["accuracy"]}, '
+                            f'OI {old.get("omniscienceIndex")} → {m["omniscienceIndex"]})')
+
+    summary = [f"Models: {len(previous_models)} → {len(new_models)}"]
+    for label, items in (("Added", added), ("Removed", removed), ("Replaced by a newer release", replaced),
+                         ("Re-scored beyond guard thresholds", rescored)):
+        if items:
+            summary.append(f"{label} ({len(items)}): " + "; ".join(items))
+    if len(summary) == 1:
+        summary.append("No model changes.")
+
+    problems = []
+    if previous_models:
+        for label, items, limit in (("removed", removed, guards["maxRemovedModels"]),
+                                    ("added", added, guards["maxAddedModels"]),
+                                    ("re-scored", rescored, guards["maxChangedModels"])):
+            if len(items) > limit:
+                problems.append(f"{len(items)} models would be {label} at once (limit {limit:g})")
+    return summary, problems
+
+
+# --------------------------------------------------------------------------
+# Command line
+# --------------------------------------------------------------------------
+
+def parse_args(argv):
+    parser = argparse.ArgumentParser(description="Refresh data.json from AA-Omniscience results.")
+    parser.add_argument("--dry-run", action="store_true",
+                        help="validate everything and show what would change, but write nothing")
+    parser.add_argument("--output-dir", type=Path, default=None,
+                        help="where to write data.json and state.json (default: repository root)")
+    parser.add_argument("--snapshot-dir", type=Path,
+                        help="on failure, save AA's raw page and feed here for debugging")
+    parser.add_argument("--keep-snapshot", action="store_true",
+                        help="save the snapshot even when the run succeeds (needs --snapshot-dir)")
+    parser.add_argument("--from-snapshot", type=Path, metavar="DIR",
+                        help="replay a saved snapshot instead of contacting AA")
+    parser.add_argument("--allow-large-changes", action="store_true",
+                        help="publish even if the sanity guard flags a mass change "
+                             "(same as ALLOW_LARGE_CHANGES=true)")
+    parser.add_argument("--bootstrap", action="store_true",
+                        help="start a brand-new tracker with empty admission history")
+    return parser.parse_args(argv)
+
+
+def _annotate(level, message):
+    """Surface a message in the GitHub Actions UI when running there."""
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        escaped = message.replace("%", "%25").replace("\r", "%0D").replace("\n", "%0A")
+        print(f"::{level} title=AA-Omniscience update::{escaped}")
+
+
+def _step_summary(lines):
+    summary_path = os.environ.get("GITHUB_STEP_SUMMARY")
+    if summary_path:
+        with open(summary_path, "a", encoding="utf-8") as handle:
+            handle.write("\n".join(lines) + "\n\n")
+
+
+def main(argv=None):
+    args = parse_args(sys.argv[1:] if argv is None else argv)
+    allow_large = args.allow_large_changes or os.environ.get("ALLOW_LARGE_CHANGES", "").lower() in ("1", "true", "yes")
+    fetcher = None
+    stats = {}
+    try:
+        config = load_config()
+        previous_data, state, state_source = load_previous(bootstrap=args.bootstrap)
+        print(f"Admission history: {state_source}")
+        fetcher = (aa_source.SnapshotFetcher(args.from_snapshot) if args.from_snapshot
+                   else aa_source.Fetcher())
+        records, stats = aa_source.load_records(fetcher, previous_data.get("models", []),
+                                                minimum_records=config["guards"]["minimumModels"])
+        print("Source: " + ", ".join(f"{k}={v}" for k, v in stats.items()
+                                     if not isinstance(v, list)))
+        payload, new_state = build(records, previous_data, state, config)
+        summary, problems = check_changes(previous_data.get("models", []), payload["models"], config["guards"])
+        print("\n".join(summary))
+        _step_summary(["### AA-Omniscience update", *[f"- {line}" for line in summary]])
+        if problems:
+            message = ("Sanity guard: " + "; ".join(problems) + ". This usually means the parser broke "
+                       "rather than the benchmark changing. If the change is genuine (for example AA "
+                       "re-scored every model), re-run the update workflow manually with 'Allow large "
+                       "changes' ticked.")
+            if not allow_large:
+                raise GuardError(message)
+            print("Allowed by override: " + message)
+    except Exception as exc:  # noqa: BLE001 - every failure must leave evidence and a clear message
+        known = isinstance(exc, (UpdateError, SourceError))
+        message = str(exc) if known else f"Unexpected {type(exc).__name__}: {exc}"
+        if not known:
+            traceback.print_exc()
+        if args.snapshot_dir and fetcher is not None and fetcher.responses:
+            where = aa_source.save_snapshot(fetcher, args.snapshot_dir, {
+                "result": "failed", "error": message, "stats": stats,
+                "savedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")})
+            print(f"Saved AA's raw responses to {where} for debugging.")
+        print(f"ERROR: {message}", file=sys.stderr)
+        _annotate("error", message)
+        _step_summary(["### AA-Omniscience update failed", message])
+        return 1
+
+    if args.snapshot_dir and args.keep_snapshot:
+        aa_source.save_snapshot(fetcher, args.snapshot_dir, {
+            "result": "ok", "stats": stats, "summary": summary,
+            "savedAt": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")})
+    if args.dry_run:
+        print("Dry run: nothing written.")
+        return 0
+    output_dir = args.output_dir or ROOT
+    write_json(output_dir / STATE_FILE, new_state)
+    write_json(output_dir / DATA_FILE, payload)
+    print(f"Updated {len(payload['models'])} models; data last changed {payload['updatedAt']}")
+    return 0
 
 
 if __name__ == "__main__":
-    payload = build()
-    (ROOT / "data.json").write_text(json.dumps(payload, indent=2, ensure_ascii=False) + "\n", encoding="utf-8")
-    print(f"Updated {len(payload['models'])} models at {payload['updatedAt']}")
+    sys.exit(main())

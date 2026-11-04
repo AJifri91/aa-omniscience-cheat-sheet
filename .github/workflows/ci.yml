@@ -9,25 +9,43 @@ permissions:
   checks: write
 
 jobs:
-  capture:
+  test:
+    name: Unit tests
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: python -m pip install cryptography==46.0.0
-      - name: Structure report
-        run: python scripts/_capture_snapshot.py report.md
-      - name: Publish report as a check run
+      - run: python -m pip install -r requirements.txt
+      - run: python -m unittest discover -s scripts -p 'test_*.py' -v
+
+  live-check:
+    name: Live dry run against AA
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m pip install -r requirements.txt
+      - name: Dry run against the live AA site
+        run: python scripts/update_data.py --dry-run --snapshot-dir snapshot --keep-snapshot
+      - name: Compare with the old pipeline (temporary)
+        if: always()
+        run: |
+          git fetch --depth=1 origin main
+          git show origin/main:scripts/update_data.py > scripts/_old_update_data.py
+          python scripts/_compare_old_new.py compare.md
+      - name: Publish comparison (temporary)
         if: always()
         env:
           GH_TOKEN: ${{ github.token }}
           SHA: ${{ github.event.pull_request.head.sha || github.sha }}
         run: |
-          [ -f report.md ] || echo "no report" > report.md
+          [ -f compare.md ] || echo "no comparison produced" > compare.md
           gh api "repos/${GITHUB_REPOSITORY}/check-runs" -X POST \
-            -f name="AA structure report" -f head_sha="$SHA" \
+            -f name="Old vs new pipeline" -f head_sha="$SHA" \
             -f status=completed -f conclusion=neutral \
-            -f "output[title]=AA structure report" \
-            -F "output[summary]=@report.md"
+            -f "output[title]=Old vs new pipeline" \
+            -F "output[summary]=@compare.md"
