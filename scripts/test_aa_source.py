@@ -3,6 +3,7 @@ import tempfile
 import unittest
 from email.message import Message
 from pathlib import Path
+from unittest import mock
 from urllib.error import HTTPError, URLError
 
 import aa_source
@@ -25,6 +26,12 @@ class FlightParsingTests(unittest.TestCase):
                          [("1", "I"), ("2", "T"), ("3", ""), ("4", "")])
         self.assertEqual(rows[1][2], text)
         self.assertEqual(rows[2][2], {"x": 1})
+
+    def test_hint_rows_with_an_empty_id_are_understood(self):
+        rows, errors = flight_rows(b':HL["/_next/static/media/a.woff2","font",{"crossOrigin":""}]\n'
+                                   b'1:{"x":1}\n')
+        self.assertEqual(errors, [])
+        self.assertEqual([(row_id, tag) for row_id, tag, _ in rows], [("", "HL"), ("1", "")])
 
     def test_rows_glued_without_newline_are_still_separated(self):
         rows, errors = flight_rows(b'7:{"slug":"a"}8:{"slug":"b"}')
@@ -145,6 +152,11 @@ class ContractTests(unittest.TestCase):
 
 
 class RetryTests(unittest.TestCase):
+    def setUp(self):
+        patcher = mock.patch("builtins.print")  # keep retry notices out of the test output
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     class Reply:
         def __init__(self, body):
             self.body = body

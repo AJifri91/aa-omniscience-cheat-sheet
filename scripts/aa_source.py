@@ -224,7 +224,8 @@ def flight_stream(scripts):
     return b"".join(parts), calls
 
 
-_ROW_ID = re.compile(rb"([0-9a-fA-F]+):")
+# Row ids are hex; hint rows (such as font preloads, ":HL[...]") have an empty id.
+_ROW_ID = re.compile(rb"([0-9a-fA-F]*):")
 _LENGTH_ROW = re.compile(rb"([A-Za-z])([0-9a-fA-F]+),")
 _TAG = re.compile(rb"[A-Z]*")
 

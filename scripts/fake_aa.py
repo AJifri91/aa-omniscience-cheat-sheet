@@ -85,6 +85,7 @@ def flight(releases, variants, manifest, *, manifest_prop="manifest"):
     rows = [
         '0:{"P":null,"b":"build","c":["",""]}',
         '1:I[39088,["70728","static/chunks/6e810e1c.js"],"Nav"]',
+        ':HL["/_next/static/media/09d69b6d-s.p.woff2","font",{"crossOrigin":"","type":"font/woff2"}]',
         f'2:T{len(text.encode("utf-8")):x},{text}',
         '3:["$","$L6",null,{"locale":"en","children":["$","main",null,{"children":[["$","$L88",null,'
         + json.dumps(catalogue_props) + "]]}]}]",
@@ -93,7 +94,7 @@ def flight(releases, variants, manifest, *, manifest_prop="manifest"):
         "6:null",
     ]
     # Text rows are length-delimited, so the next row follows without a newline.
-    return rows[0] + "\n" + rows[1] + "\n" + rows[2] + "\n".join(rows[3:]) + "\n"
+    return "\n".join(rows[:3]) + "\n" + rows[3] + "\n".join(rows[4:]) + "\n"
 
 
 def page(flight_text, *, chunk_size=97):

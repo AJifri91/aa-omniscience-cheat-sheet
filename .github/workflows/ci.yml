@@ -19,6 +19,8 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -r requirements.txt
       - run: python -m unittest discover -s scripts -p 'test_*.py' -v
+      - name: Check the failure-issue script
+        run: bash -n .github/scripts/failure-issue.sh
 
   live-check:
     name: Live dry run against AA
@@ -30,7 +32,16 @@ jobs:
           python-version: "3.12"
       - run: python -m pip install -r requirements.txt
       - name: Dry run against the live AA site
+        # Shows exactly what would be published, without writing anything.
         run: python scripts/update_data.py --dry-run --snapshot-dir snapshot --keep-snapshot
+      - name: Save AA's raw responses
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aa-snapshot-pr-${{ github.run_id }}
+          path: snapshot/
+          retention-days: 3
+          if-no-files-found: ignore
       - name: Compare with the old pipeline (temporary)
         if: always()
         run: |
