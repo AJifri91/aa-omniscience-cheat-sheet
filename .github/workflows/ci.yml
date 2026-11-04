@@ -6,7 +6,6 @@ on:
 
 permissions:
   contents: read
-  checks: write
 
 jobs:
   test:
@@ -42,21 +41,3 @@ jobs:
           path: snapshot/
           retention-days: 3
           if-no-files-found: ignore
-      - name: Compare with the old pipeline (temporary)
-        if: always()
-        run: |
-          git fetch --depth=1 origin main
-          git show origin/main:scripts/update_data.py > scripts/_old_update_data.py
-          python scripts/_compare_old_new.py compare.md
-      - name: Publish comparison (temporary)
-        if: always()
-        env:
-          GH_TOKEN: ${{ github.token }}
-          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
-        run: |
-          [ -f compare.md ] || echo "no comparison produced" > compare.md
-          gh api "repos/${GITHUB_REPOSITORY}/check-runs" -X POST \
-            -f name="Old vs new pipeline" -f head_sha="$SHA" \
-            -f status=completed -f conclusion=neutral \
-            -f "output[title]=Old vs new pipeline" \
-            -F "output[summary]=@compare.md"

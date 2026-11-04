@@ -393,6 +393,13 @@ def main(argv=None):
                                                 minimum_records=config["guards"]["minimumModels"])
         print("Source: " + ", ".join(f"{k}={v}" for k, v in stats.items()
                                      if not isinstance(v, list)))
+        if stats.get("unparsedFlightRows"):
+            # Not fatal (the data was still found and validated), but an early
+            # sign that AA's page format is drifting.
+            warning = (f"{stats['unparsedFlightRows']} rows of AA's page could not be parsed, e.g. "
+                       + "; ".join(stats.get("unparsedSamples", [])[:2]))
+            print("Warning: " + warning)
+            _annotate("warning", warning)
         payload, new_state = build(records, previous_data, state, config)
         summary, problems = check_changes(previous_data.get("models", []), payload["models"], config["guards"])
         print("\n".join(summary))

@@ -12,8 +12,15 @@ title="Data updater is failing"
 mode="${1:?usage: failure-issue.sh open <step> | close}"
 
 open_issue() {
-  gh issue list --repo "$GITHUB_REPOSITORY" --label "$label" --state open \
-    --json number --jq '.[0].number // empty' 2>/dev/null || true
+  local number
+  number="$(gh issue list --repo "$GITHUB_REPOSITORY" --label "$label" --state open \
+    --json number --jq '.[0].number // empty' 2>/dev/null || true)"
+  if [ -z "$number" ]; then
+    # Fallback in case the label could not be created.
+    number="$(gh issue list --repo "$GITHUB_REPOSITORY" --state open --search "\"$title\" in:title" \
+      --json number,title --jq "map(select(.title == \"$title\")) | .[0].number // empty" 2>/dev/null || true)"
+  fi
+  echo "$number"
 }
 
 if [ "$mode" = "close" ]; then
@@ -71,5 +78,6 @@ if [ -n "$number" ]; then
 else
   gh label create "$label" --repo "$GITHUB_REPOSITORY" --color B60205 \
     --description "The scheduled data update is failing" 2>/dev/null || true
-  gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --label "$label" --body-file issue-body.md
+  gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --label "$label" --body-file issue-body.md \
+    || gh issue create --repo "$GITHUB_REPOSITORY" --title "$title" --body-file issue-body.md
 fi
