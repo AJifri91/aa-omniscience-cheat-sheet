@@ -5,9 +5,15 @@ on:
     # GitHub schedules are best-effort; several windows reduce missed days.
     - cron: "17 4,10,16,22 * * *"
   workflow_dispatch:
+    inputs:
+      allow_large_changes:
+        description: "Allow large changes: publish even if the sanity guard flags a mass change. Tick only after checking the change is genuine."
+        type: boolean
+        default: false
 
 permissions:
   contents: write
+  issues: write
 
 concurrency:
   group: update-aa-omniscience-data
@@ -16,23 +22,75 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      GH_TOKEN: ${{ github.token }}
     steps:
       - uses: actions/checkout@v4
+
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install decoder and test admission rules
-        run: |
-          python -m pip install cryptography==46.0.0
-          python -m unittest discover -s scripts -p 'test_*.py' -v
+
+      - name: Install dependencies
+        run: python -m pip install -r requirements.txt
+
+      - name: Run unit tests
+        id: tests
+        run: python -m unittest discover -s scripts -p 'test_*.py'
+
       - name: Refresh benchmark data
-        run: python scripts/update_data.py
+        id: refresh
+        env:
+          ALLOW_LARGE_CHANGES: ${{ inputs.allow_large_changes && 'true' || 'false' }}
+        run: |
+          set -o pipefail
+          python scripts/update_data.py --snapshot-dir snapshot 2>&1 | tee update.log
+
       - name: Commit changes
+        id: commit
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add data.json
-          if ! git diff --cached --quiet; then
+          git add data.json state.json
+          if git diff --cached --quiet; then
+            echo "No data changes."
+          else
             git commit -m "Update AA-Omniscience data"
-            git push
+            git push || { git pull --rebase && git push; }
           fi
+
+      - name: Keep the schedule alive
+        id: keepalive
+        # GitHub disables scheduled workflows after 60 days without repository
+        # activity. Quiet stretches at AA would otherwise stop the updater.
+        run: |
+          days=$(( ($(date +%s) - $(git log -1 --format=%ct)) / 86400 ))
+          if [ "$days" -ge 50 ]; then
+            git commit --allow-empty -m "Keep scheduled data updates active (no commits for $days days)"
+            git push || { git pull --rebase && git push; }
+          fi
+
+      - name: Save AA's raw responses for debugging
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: aa-snapshot-${{ github.run_id }}
+          path: snapshot/
+          retention-days: 14
+          if-no-files-found: ignore
+
+      - name: Open or update the failure issue
+        if: failure()
+        run: |
+          if [ "${{ steps.tests.outcome }}" = "failure" ]; then step="unit tests"
+          elif [ "${{ steps.refresh.outcome }}" = "failure" ]; then step="data refresh"
+          elif [ "${{ steps.commit.outcome }}" = "failure" ]; then step="committing the data"
+          elif [ "${{ steps.keepalive.outcome }}" = "failure" ]; then step="keeping the schedule alive"
+          else step="setup"; fi
+          bash .github/scripts/failure-issue.sh open "$step"
+
+      - name: Close the failure issue
+        if: success()
+        run: bash .github/scripts/failure-issue.sh close
