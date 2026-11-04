@@ -14,6 +14,17 @@ from update_data import (GuardError, StateError, UpdateError, build, check_chang
                          load_config, load_previous, model_row)
 
 
+# Tests use their own fixed policy, so editing config.json can never break them
+# (and with them the scheduled update, which runs the tests first).
+TEST_CONFIG = {
+    "admission": {"newModelMinimumAccuracy": 35, "grandfatheredMinimumAccuracy": 27,
+                  "grandfatheredReleases": ["grok-4-6"]},
+    "guards": {"minimumModels": 15, "maxRemovedModels": 3, "maxAddedModels": 5, "maxChangedModels": 3,
+               "changedAccuracyPoints": 3, "changedIndexPoints": 5},
+}
+POLICY = TEST_CONFIG["admission"]
+
+
 def model(release, accuracy, *, effort=4, selected=False, date="2026-09-23"):
     return {
         "model": release,
@@ -30,7 +41,7 @@ class AdmissionTests(unittest.TestCase):
     def test_unselected_new_release_is_admitted(self):
         previous = {"seenBenchmarkReleases": ["older-model"], "models": []}
         rows, admitted, seen, tracked = eligible_models(
-            [model("older-model", 40), model("new-model", 35)], previous
+            [model("older-model", 40), model("new-model", 35)], previous, POLICY
         )
         self.assertEqual([row["releaseKey"] for row in rows], ["new-model"])
         self.assertIn("new-model", admitted)
@@ -40,7 +51,7 @@ class AdmissionTests(unittest.TestCase):
     def test_lower_reasoning_cannot_qualify_release(self):
         previous = {"seenBenchmarkReleases": [], "models": []}
         rows, admitted, _, tracked = eligible_models(
-            [model("new-model", 40, effort=2), model("new-model", 34, effort=5)], previous
+            [model("new-model", 40, effort=2), model("new-model", 34, effort=5)], previous, POLICY
         )
         self.assertEqual(rows, [])
         self.assertEqual(admitted, set())
@@ -49,7 +60,7 @@ class AdmissionTests(unittest.TestCase):
     def test_tracked_release_can_qualify_later(self):
         previous = {"seenBenchmarkReleases": ["new-model"],
                     "trackedNewReleases": ["new-model"], "models": []}
-        rows, admitted, _, _ = eligible_models([model("new-model", 35)], previous)
+        rows, admitted, _, _ = eligible_models([model("new-model", 35)], previous, POLICY)
         self.assertEqual(len(rows), 1)
         self.assertEqual(admitted, {"new-model"})
 
@@ -58,17 +69,17 @@ class AdmissionTests(unittest.TestCase):
                     "admittedNewReleases": [], "models": []}
         old = model("grok-4-6", 40, date="2026-09-01")
         new = model("grok-4-7", 34, date="2026-09-23")
-        rows, _, _, tracked = eligible_models([old, new], previous)
+        rows, _, _, tracked = eligible_models([old, new], previous, POLICY)
         self.assertEqual([row["releaseKey"] for row in rows], ["grok-4-6"])
         self.assertIn("grok-4-7", tracked)
         new["rawAccuracy"] = 35
-        rows, _, _, _ = eligible_models([old, new], previous)
+        rows, _, _, _ = eligible_models([old, new], previous, POLICY)
         self.assertEqual([row["releaseKey"] for row in rows], ["grok-4-7"])
 
     def test_migration_does_not_import_historical_rows(self):
         rows, admitted, seen, tracked = eligible_models(
             [model("historical", 50), model("fresh", 35, selected=True)],
-            {"models": []},
+            {"models": []}, POLICY,
         )
         self.assertEqual([row["releaseKey"] for row in rows], ["fresh"])
         self.assertEqual(admitted, {"fresh"})
@@ -76,7 +87,7 @@ class AdmissionTests(unittest.TestCase):
         self.assertEqual(tracked, {"fresh"})
 
     def test_thresholds_come_from_config(self):
-        policy = dict(load_config()["admission"], newModelMinimumAccuracy=50)
+        policy = dict(POLICY, newModelMinimumAccuracy=50)
         rows, _, _, _ = eligible_models([model("new-model", 45)],
                                         {"seenBenchmarkReleases": [], "models": []}, policy)
         self.assertEqual(rows, [])
@@ -85,8 +96,7 @@ class AdmissionTests(unittest.TestCase):
 class ConfigTests(unittest.TestCase):
     def test_repository_config_is_valid(self):
         config = load_config()
-        self.assertEqual(config["admission"]["newModelMinimumAccuracy"], 35)
-        self.assertIn("grok-4-6", config["admission"]["grandfatheredReleases"])
+        self.assertGreater(config["guards"]["minimumModels"], 0)
 
     def test_invalid_config_is_rejected(self):
         with tempfile.TemporaryDirectory() as tmp:
@@ -159,7 +169,7 @@ def published(name, release, creator, accuracy, oi, url=None):
 
 
 class GuardTests(unittest.TestCase):
-    guards = load_config()["guards"]
+    guards = TEST_CONFIG["guards"]
 
     def baseline(self):
         return [published(f"M{n}", f"model-{n}", f"lab{n}", 40.0, 10.0) for n in range(10)]
@@ -203,7 +213,7 @@ class GuardTests(unittest.TestCase):
 
 
 class BuildTests(unittest.TestCase):
-    config = load_config()
+    config = TEST_CONFIG
 
     def records(self, count=16):
         records, _ = aa_source.load_records(fake_aa.FakeFetcher(fake_aa.site(fake_aa.standard_feed(count))))
@@ -249,7 +259,7 @@ class CommandLineTests(unittest.TestCase):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name, "repo")
         self.root.mkdir()
-        Path(self.root, "config.json").write_text(Path(update_data.ROOT, "config.json").read_text())
+        Path(self.root, "config.json").write_text(json.dumps(TEST_CONFIG))
         self.snapshot = Path(self.tmp.name, "snapshot")
         self.save_site(fake_aa.site())
         patcher = mock.patch.object(update_data, "ROOT", self.root)
