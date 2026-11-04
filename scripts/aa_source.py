@@ -234,20 +234,25 @@ def flight_rows(stream):
 
     JSON rows end at a newline; text ("T") and binary rows are length-prefixed
     in bytes, so they may themselves contain newlines. Rows that cannot be
-    parsed are counted, not guessed at.
+    parsed are skipped and returned as short samples, never guessed at.
     """
     decoder = json.JSONDecoder()
-    rows, errors = [], 0
+    rows, errors = [], []
     position, size = 0, len(stream)
+
+    def skip(reason, at):
+        newline = stream.find(b"\n", at)
+        end = size if newline == -1 else newline
+        errors.append(f"{reason} at byte {at}: {stream[at:min(end, at + 80)].decode('utf-8', 'replace')!r}")
+        return end + 1
+
     while position < size:
         if stream[position:position + 1] in (b"\n", b"\r"):
             position += 1
             continue
         head = _ROW_ID.match(stream, position)
         if not head:
-            errors += 1
-            newline = stream.find(b"\n", position)
-            position = size if newline == -1 else newline + 1
+            position = skip("no row id", position)
             continue
         row_id = head.group(1).decode()
         start = head.end()
@@ -268,8 +273,7 @@ def flight_rows(stream):
         try:
             value, consumed = decoder.raw_decode(line)
         except ValueError:
-            errors += 1
-            position = line_end + 1
+            position = skip(f"row {row_id}{tag} is not JSON", position)
             continue
         rows.append((row_id, tag, value))
         if line[consumed:].strip():
@@ -322,7 +326,8 @@ def page_objects(html_bytes):
             except ValueError:
                 pass
     stats = {"pageBytes": len(html_bytes), "scripts": len(scripts), "nextChunks": calls,
-             "flightRows": len(rows), "unparsedFlightRows": row_errors, "jsonScripts": json_scripts}
+             "flightRows": len(rows), "unparsedFlightRows": len(row_errors), "jsonScripts": json_scripts,
+             "unparsedSamples": row_errors[:5]}
     if not values:
         raise SourceError("The page has no embedded data: no Next.js data chunks or JSON scripts "
                           f"were found ({len(scripts)} scripts). AA has likely changed how the page is built.")

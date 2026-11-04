@@ -32,7 +32,9 @@ say("state source:", source)
 
 fetcher = aa_source.Fetcher()
 records, stats = aa_source.load_records(fetcher, previous_data.get("models", []))
-say("new stats:", json.dumps(stats)[:1500])
+say("new stats:", json.dumps({k: v for k, v in stats.items() if k != "unparsedSamples"}))
+for sample in stats.get("unparsedSamples", []):
+    say("  unparsed:", sample)
 payload_new, state_new = new.build(records, previous_data, state, config)
 
 
