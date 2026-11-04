@@ -6,6 +6,7 @@ on:
 
 permissions:
   contents: read
+  checks: write
 
 jobs:
   capture:
@@ -16,11 +17,17 @@ jobs:
         with:
           python-version: "3.12"
       - run: python -m pip install cryptography==46.0.0
-      - name: Capture AA snapshot
-        run: python scripts/_capture_snapshot.py snapshot
-      - uses: actions/upload-artifact@v4
+      - name: Structure report
+        run: python scripts/_capture_snapshot.py report.md
+      - name: Publish report as a check run
         if: always()
-        with:
-          name: aa-snapshot
-          path: snapshot/
-          retention-days: 3
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          [ -f report.md ] || echo "no report" > report.md
+          gh api "repos/${GITHUB_REPOSITORY}/check-runs" -X POST \
+            -f name="AA structure report" -f head_sha="$SHA" \
+            -f status=completed -f conclusion=neutral \
+            -f "output[title]=AA structure report" \
+            -F "output[summary]=@report.md"
