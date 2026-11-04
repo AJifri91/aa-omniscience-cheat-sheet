@@ -1,0 +1,6 @@
+__pycache__/
+*.pyc
+snapshot/
+update.log
+issue-body.md
+*.tmp
