@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-04T10:30:42.295879Z",
+  "updatedAt": "2026-11-05T02:27:51.724642Z",
   "modelCount": 27,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
@@ -28,7 +28,7 @@
       "profile": "Frontier reliability: high knowledge with comparatively controlled guessing."
     },
     {
-      "model": "Claude Opus 5.5 (max with fallback)",
+      "model": "Claude Opus 5.5 (max)",
       "releaseKey": "claude-opus-5-5",
       "creatorSlug": "anthropic",
       "reasoningRank": 6,
@@ -45,7 +45,7 @@
       "profile": "Strong knowledge, with meaningful hallucination risk on misses."
     },
     {
-      "model": "Claude Fable 5.1 (max with fallback)",
+      "model": "Claude Fable 5.1 (max)",
       "releaseKey": "claude-fable-5-1",
       "creatorSlug": "anthropic",
       "reasoningRank": 6,
@@ -147,7 +147,7 @@
       "profile": "Well calibrated: solid knowledge and relatively honest abstention."
     },
     {
-      "model": "Claude Sonnet 5.5 (max with fallback)",
+      "model": "Claude Sonnet 5.5 (max)",
       "releaseKey": "claude-sonnet-5-5",
       "creatorSlug": "anthropic",
       "reasoningRank": 6,
