@@ -1,7 +1,7 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-05T02:27:51.724642Z",
-  "modelCount": 27,
+  "updatedAt": "2026-11-05T12:19:36.304076Z",
+  "modelCount": 28,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
     "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
@@ -271,7 +271,7 @@
       "creatorSlug": "stepfun",
       "reasoningRank": 0,
       "releaseDate": "2026-09-18",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/step-5",
       "correct": 36.37,
       "incorrect": 19.93,
@@ -331,6 +331,23 @@
       "omniscienceIndex": 6.03,
       "hallucinationRate": 38.87,
       "standardPercent": 53.02,
+      "profile": "Positive reliability, but mistakes remain frequent when uncertain."
+    },
+    {
+      "model": "Tencent Hy4",
+      "releaseKey": "hunyuan-dev1030-aa",
+      "creatorSlug": "tencent",
+      "reasoningRank": 0,
+      "releaseDate": "2026-11-03",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/tencent-hy4",
+      "correct": 49.97,
+      "incorrect": 44.57,
+      "partialAbstain": 5.47,
+      "accuracy": 49.97,
+      "omniscienceIndex": 5.4,
+      "hallucinationRate": 89.07,
+      "standardPercent": 52.7,
       "profile": "Positive reliability, but mistakes remain frequent when uncertain."
     },
     {
