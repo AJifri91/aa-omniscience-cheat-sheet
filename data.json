@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-05T12:19:36.304076Z",
+  "updatedAt": "2026-11-06T02:25:31.006430Z",
   "modelCount": 28,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
@@ -390,7 +390,7 @@
       "creatorSlug": "thinking-machines",
       "reasoningRank": 5,
       "releaseDate": "2026-07-15",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/inkling",
       "correct": 39.3,
       "incorrect": 40.8,
