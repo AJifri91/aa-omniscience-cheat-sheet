@@ -23,6 +23,7 @@
     "a-x-k2",
     "agnes-2-5-pro-alpha",
     "agnes-2-5-pro-beta",
+    "agnes-2-5-pro-theta",
     "agnes-3-0-flash",
     "apertus-70b-instruct",
     "apertus-8b-instruct",
@@ -428,6 +429,7 @@
     "trinity-large-thinking"
   ],
   "trackedNewReleases": [
+    "agnes-2-5-pro-theta",
     "claude-haiku-5-5",
     "claude-opus-5-5",
     "claude-sonnet-5-5",
