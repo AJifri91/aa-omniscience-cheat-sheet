@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-06T02:25:31.006430Z",
+  "updatedAt": "2026-11-10T00:14:53.130691Z",
   "modelCount": 28,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
@@ -10,6 +10,23 @@
     "familyReplacement": "Newest eligible AA release date per creator and product line"
   },
   "models": [
+    {
+      "model": "Claude Fable 5.2 (max)",
+      "releaseKey": "claude-fable-5-2",
+      "creatorSlug": "anthropic",
+      "reasoningRank": 6,
+      "releaseDate": "2026-11-09",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/claude-fable-5-2",
+      "correct": 79.13,
+      "incorrect": 12.37,
+      "partialAbstain": 8.5,
+      "accuracy": 79.13,
+      "omniscienceIndex": 66.77,
+      "hallucinationRate": 59.27,
+      "standardPercent": 83.38,
+      "profile": "Strong knowledge, with meaningful hallucination risk on misses."
+    },
     {
       "model": "Gemini 4 Carbon (high)",
       "releaseKey": "gemini-4-carbon",
@@ -43,23 +60,6 @@
       "hallucinationRate": 50.34,
       "standardPercent": 74.07,
       "profile": "Strong knowledge, with meaningful hallucination risk on misses."
-    },
-    {
-      "model": "Claude Fable 5.1 (max)",
-      "releaseKey": "claude-fable-5-1",
-      "creatorSlug": "anthropic",
-      "reasoningRank": 6,
-      "releaseDate": "2026-09-01",
-      "chartDefaultSelected": true,
-      "detailsUrl": "https://artificialanalysis.ai/models/claude-fable-5-1",
-      "correct": 68.4,
-      "incorrect": 22.13,
-      "partialAbstain": 9.47,
-      "accuracy": 68.4,
-      "omniscienceIndex": 46.27,
-      "hallucinationRate": 70.04,
-      "standardPercent": 73.13,
-      "profile": "High raw knowledge, but aggressive guessing raises hallucination risk."
     },
     {
       "model": "Gemini 4 Argon (high)",
@@ -203,7 +203,7 @@
       "creatorSlug": "meta",
       "reasoningRank": 5,
       "releaseDate": "2026-10-15",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/muse-spark-open",
       "correct": 42.03,
       "incorrect": 16.23,
@@ -458,7 +458,7 @@
       "creatorSlug": "minimax",
       "reasoningRank": 0,
       "releaseDate": "2026-10-19",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/minimax-m3-1-flash",
       "correct": 45.07,
       "incorrect": 51.47,

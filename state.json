@@ -1,5 +1,6 @@
 {
   "admittedNewReleases": [
+    "claude-fable-5-2",
     "claude-haiku-5-5",
     "claude-opus-5-5",
     "claude-sonnet-5-5",
@@ -39,6 +40,7 @@
     "claude-4-sonnet",
     "claude-fable-5",
     "claude-fable-5-1",
+    "claude-fable-5-2",
     "claude-haiku-5-5",
     "claude-opus-4-5",
     "claude-opus-4-6",
@@ -303,6 +305,7 @@
     "motif-0714",
     "motif-2-12-7b-reasoning",
     "motif-3",
+    "muse-ember",
     "muse-glimmer",
     "muse-spark",
     "muse-spark-1-1",
@@ -430,6 +433,7 @@
   ],
   "trackedNewReleases": [
     "agnes-2-5-pro-theta",
+    "claude-fable-5-2",
     "claude-haiku-5-5",
     "claude-opus-5-5",
     "claude-sonnet-5-5",
@@ -452,6 +456,7 @@
     "minimax-m3-1-flash",
     "mistral-large-4",
     "mistral-large-4-preview",
+    "muse-ember",
     "muse-spark-open",
     "muse-wonder",
     "muse-wonder-full",
