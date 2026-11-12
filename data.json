@@ -1,7 +1,7 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-10T00:14:53.130691Z",
-  "modelCount": 28,
+  "updatedAt": "2026-11-12T22:14:29.459677Z",
+  "modelCount": 29,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
     "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
@@ -60,6 +60,23 @@
       "hallucinationRate": 50.34,
       "standardPercent": 74.07,
       "profile": "Strong knowledge, with meaningful hallucination risk on misses."
+    },
+    {
+      "model": "Gemini 4 Hydrogen (xhigh)",
+      "releaseKey": "gemini-4-hydrogen",
+      "creatorSlug": "google",
+      "reasoningRank": 5,
+      "releaseDate": "2026-11-12",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/gemini-4-hydrogen",
+      "correct": 50.47,
+      "incorrect": 4.2,
+      "partialAbstain": 45.33,
+      "accuracy": 50.47,
+      "omniscienceIndex": 46.27,
+      "hallucinationRate": 8.48,
+      "standardPercent": 73.13,
+      "profile": "Frontier reliability: high knowledge with comparatively controlled guessing."
     },
     {
       "model": "Gemini 4 Argon (high)",
@@ -237,7 +254,7 @@
       "creatorSlug": "google",
       "reasoningRank": 4,
       "releaseDate": "2026-09-02",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/gemini-3-8-flash",
       "correct": 50.53,
       "incorrect": 27.27,
