@@ -1,7 +1,7 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-12T22:14:29.459677Z",
-  "modelCount": 29,
+  "updatedAt": "2026-11-14T02:26:02.340120Z",
+  "modelCount": 28,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
     "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
@@ -317,23 +317,6 @@
       "profile": "Conservative and well calibrated, though factual coverage is more limited."
     },
     {
-      "model": "Qwen3.8 Max (0902)",
-      "releaseKey": "qwen3-8-max-0902",
-      "creatorSlug": "alibaba",
-      "reasoningRank": 0,
-      "releaseDate": "2026-09-02",
-      "chartDefaultSelected": true,
-      "detailsUrl": "https://artificialanalysis.ai/models/qwen3-8-max",
-      "correct": 29.53,
-      "incorrect": 19.07,
-      "partialAbstain": 51.4,
-      "accuracy": 29.53,
-      "omniscienceIndex": 10.47,
-      "hallucinationRate": 27.06,
-      "standardPercent": 55.23,
-      "profile": "Conservative and well calibrated, though factual coverage is more limited."
-    },
-    {
       "model": "GLM-5.3 (max)",
       "releaseKey": "glm-5-3",
       "creatorSlug": "zai",
@@ -352,7 +335,7 @@
     },
     {
       "model": "Tencent Hy4",
-      "releaseKey": "hunyuan-dev1030-aa",
+      "releaseKey": "tencent-hy4",
       "creatorSlug": "tencent",
       "reasoningRank": 0,
       "releaseDate": "2026-11-03",

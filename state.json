@@ -19,7 +19,8 @@
     "minimax-m3-1-flash",
     "muse-spark-open",
     "muse-wonder",
-    "muse-wonder-full"
+    "muse-wonder-full",
+    "tencent-hy4"
   ],
   "seenBenchmarkReleases": [
     "a-x-k2",
@@ -198,6 +199,7 @@
     "hyperclova-x-seed-think-32b",
     "hypernova-60b",
     "inkling",
+    "inkling-2-small",
     "inkling-small",
     "inkling-small-1102-rc17",
     "intellect-3",
@@ -422,6 +424,7 @@
     "solar-open2-250b",
     "solar-pro-2",
     "solar-pro-3",
+    "solar-pro-4",
     "solar-pro-4-2026-09-18",
     "solar-pro4",
     "step-3-5-flash",
@@ -429,6 +432,7 @@
     "step-3-7-flash",
     "step-5-preview",
     "step3-vl-10b",
+    "tencent-hy4",
     "tiny-aya-global",
     "tri-21b-think-preview",
     "tri-21b-think-v0-5",
@@ -450,6 +454,7 @@
     "gpt-6-sol",
     "grok-4-7",
     "hunyuan-dev1030-aa",
+    "inkling-2-small",
     "inkling-small-1102-rc17",
     "k-exaone-2-0",
     "kimi-k3-1-pro",
@@ -471,6 +476,8 @@
     "nemotron-3-5-super-vl",
     "reflection-beam",
     "solar-mini4",
-    "solar-pro-4-2026-09-18"
+    "solar-pro-4",
+    "solar-pro-4-2026-09-18",
+    "tencent-hy4"
   ]
 }
