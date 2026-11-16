@@ -1,7 +1,7 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-14T11:28:04.810782Z",
-  "modelCount": 28,
+  "updatedAt": "2026-11-16T08:41:21.951384Z",
+  "modelCount": 29,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
     "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
@@ -212,6 +212,23 @@
       "omniscienceIndex": 29.57,
       "hallucinationRate": 34.5,
       "standardPercent": 64.78,
+      "profile": "Well calibrated: solid knowledge and relatively honest abstention."
+    },
+    {
+      "model": "Qwen4 Max",
+      "releaseKey": "qwen4-max",
+      "creatorSlug": "alibaba",
+      "reasoningRank": 50,
+      "releaseDate": "2026-11-16",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/qwen4-max",
+      "correct": 43.7,
+      "incorrect": 16.0,
+      "partialAbstain": 40.3,
+      "accuracy": 43.7,
+      "omniscienceIndex": 27.7,
+      "hallucinationRate": 28.42,
+      "standardPercent": 63.85,
       "profile": "Well calibrated: solid knowledge and relatively honest abstention."
     },
     {

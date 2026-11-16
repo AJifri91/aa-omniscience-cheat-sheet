@@ -10,11 +10,11 @@
     html[data-theme=light]{--bg:#f4f8fa;--panel:#fff;--panel2:#edf5f7;--line:#d4e2e8;--text:#13202b;--muted:#5d7281;--cyan:#087f7b;--blue:#2563eb;--green:#087f5b;--red:#be123c;--amber:#a16207;color-scheme:light}
     *{box-sizing:border-box}body{margin:0;background:radial-gradient(circle at 10% 0,#36d7d01b,transparent 30%),var(--bg);color:var(--text);font:15px/1.5 Inter,ui-sans-serif,system-ui,-apple-system,sans-serif}.wrap{width:min(1420px,calc(100% - 28px));margin:auto}header{padding:42px 0 22px}.eyebrow{color:var(--cyan);font-size:.75rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase}h1{font-size:clamp(2rem,5vw,3.5rem);line-height:1.02;letter-spacing:-.045em;margin:9px 0 12px}.intro{max-width:900px;color:var(--muted);font-size:1.02rem}
     .toolbar{position:sticky;top:0;z-index:5;padding:13px 0;background:#071018e8;border-block:1px solid var(--line);backdrop-filter:blur(18px)}html[data-theme=light] .toolbar{background:#f4f8fae8}.tools{display:flex;gap:9px;align-items:center;flex-wrap:wrap}.tools input,.tools select,.btn{min-height:43px;border:1px solid var(--line);border-radius:11px;background:var(--panel);color:var(--text);padding:9px 12px;font:inherit}.tools input{flex:1;min-width:230px}.btn{cursor:pointer}.status{margin-left:auto;color:var(--muted);font-size:.82rem}
-    .tablebox{margin:24px 0 34px;overflow:auto;max-height:70vh;max-height:70dvh;border:1px solid var(--line);border-radius:17px;background:var(--panel)}table{width:100%;border-collapse:separate;border-spacing:0;min-width:1050px}th,td{padding:12px 13px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--line);background:var(--panel2);color:var(--muted);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}th:first-child,td:first-child,th:last-child,td:last-child{text-align:left}tbody tr:hover{background:#36d7d00a}.rank{color:var(--muted);width:42px}.model a{color:var(--text);font-weight:750;text-decoration:none}.model a:hover{color:var(--cyan)}.oi{font-weight:850}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:var(--amber)}.profile{max-width:350px;white-space:normal;color:var(--muted);font-size:.86rem}.source{padding:16px 0 45px;color:var(--muted);font-size:.86rem}.source a{color:var(--cyan)}.empty{padding:45px;text-align:center;color:var(--muted)}
+    .tablebox{margin:24px 0 34px;overflow:auto;max-height:70vh;max-height:70dvh;border:1px solid var(--line);border-radius:17px;background:var(--panel)}table{width:100%;border-collapse:separate;border-spacing:0;min-width:1050px}th,td{padding:12px 13px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}th{position:sticky;top:0;z-index:2;box-shadow:0 1px 0 var(--line);background:var(--panel2);color:var(--muted);font-size:.75rem;letter-spacing:.04em;text-transform:uppercase;cursor:pointer}th:first-child,td:first-child,th:nth-child(2),td:nth-child(2),th:last-child,td:last-child{text-align:left}tbody tr:hover{background:#36d7d00a}.rank{color:var(--muted);width:42px}.model a{color:var(--text);font-weight:750;text-decoration:none}.model a:hover{color:var(--cyan)}.oi{font-weight:850}.positive{color:var(--green)}.negative{color:var(--red)}.neutral{color:var(--amber)}.profile{max-width:350px;white-space:normal;color:var(--muted);font-size:.86rem}.source{padding:16px 0 45px;color:var(--muted);font-size:.86rem}.source a{color:var(--cyan)}.empty{padding:45px;text-align:center;color:var(--muted)}
     th button{all:unset;cursor:pointer;display:inline-flex;gap:5px;align-items:center}th button:focus-visible{outline:2px solid var(--cyan);outline-offset:3px;border-radius:4px}th[aria-sort=ascending] button::after{content:"▲";font-size:.65rem}th[aria-sort=descending] button::after{content:"▼";font-size:.65rem}
     .status{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.health{display:inline-flex;line-height:0}.health img{height:20px}#status.error{color:var(--red)}
-    @media(max-width:760px){.status{width:100%;margin:0}.toolbar{position:static}}
-    .legend{margin-top:24px;border:1px solid var(--line);border-radius:17px;padding:20px;background:var(--panel)}.legend h2{margin:0 0 10px;font-size:1.2rem}.legend p,.legend dd{color:var(--muted);font-size:.9rem}.legend dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin:20px 0}.legend dt{font-weight:750;color:var(--cyan)}.legend dd{margin:5px 0 0}
+    @media(max-width:760px){.status{width:100%;margin:0}.toolbar{position:static}header{padding:28px 0 14px}.tablebox{margin:16px 0 26px;max-height:none}table{min-width:0}th,td{padding:10px 9px}th{font-size:.68rem}th:last-child,td:last-child{display:none}.rank{width:auto;padding-right:4px}td:nth-child(2),th:nth-child(2){position:sticky;left:0;z-index:1;background:var(--panel);box-shadow:1px 0 0 var(--line);white-space:normal;min-width:130px;max-width:160px}th:nth-child(2){z-index:3;background:var(--panel2)}.model a{font-size:.9rem;line-height:1.3}}
+    .legend{margin-top:24px;border:1px solid var(--line);border-radius:17px;padding:16px 20px;background:var(--panel)}.legend summary{cursor:pointer;list-style:none;display:flex;justify-content:space-between;align-items:center;gap:12px}.legend summary::-webkit-details-marker{display:none}.legend summary::after{content:"Show";color:var(--cyan);font-size:.82rem;font-weight:700}.legend[open] summary::after{content:"Hide"}.legend summary:focus-visible{outline:2px solid var(--cyan);outline-offset:4px;border-radius:6px}.legend h2{margin:0;font-size:1.2rem}.legend[open] h2{margin-bottom:10px}.legend p,.legend dd{color:var(--muted);font-size:.9rem}.legend dl{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:18px;margin:20px 0}.legend dt{font-weight:750;color:var(--cyan)}.legend dd{margin:5px 0 0}
   </style>
 </head>
 <body>
@@ -23,8 +23,8 @@
   <h1>AA-Omniscience<br>Benchmark Cheat Sheet</h1>
   <p class="intro">Reliability, not just recall. On 6,000 expert-level questions without tools or context, correct answers earn +1, incorrect answers −1, and partial answers or abstentions 0.</p>
 
-  <section class="legend" aria-labelledby="legend-title">
-    <h2 id="legend-title">Legend · How to read the table</h2>
+  <details class="legend" id="legend">
+    <summary><h2>Legend · How to read the table</h2></summary>
     <p>c, i, p and a are percentages of all questions.</p>
     <dl>
       <div><dt>c · Correct (Accuracy)</dt><dd>Fully correct answers. Higher is better.</dd></div>
@@ -37,7 +37,7 @@
       <div><dt>Standard %</dt><dd>(OI ÷ 2) + 50. Custom 0–100 rescaling of OI; not accuracy or an official AA metric.</dd></div>
       <div><dt>Profile</dt><dd>Our summary of the metrics, not an official AA rating.</dd></div>
     </dl>
-  </section>
+  </details>
 </header>
 <section class="toolbar"><div class="wrap tools">
   <input id="search" type="search" placeholder="Search models or profiles…">
@@ -61,7 +61,7 @@ const esc=s=>String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&
 const link=u=>/^https:\/\/artificialanalysis\.ai\//.test(u)?u:"https://artificialanalysis.ai/evaluations/omniscience";
 function render(){
   const q=search.value.toLowerCase().trim(),f=filter.value;
-  const view=data.filter(x=>(!q||(x.model+" "+x.profile).toLowerCase().includes(q))&&(f==="all"||f==="positive"&&x.omniscienceIndex>=0||f==="negative"&&x.omniscienceIndex<0||f==="calibrated"&&x.hallucinationRate<40));
+  const view=data.filter(x=>(!q||(x.model+" "+x.profile).toLowerCase().includes(q))&&(f==="all"||f==="positive"&&x.omniscienceIndex>0||f==="negative"&&x.omniscienceIndex<0||f==="calibrated"&&x.hallucinationRate<40));
   view.sort((a,b)=>typeof a[sortKey]==="string"?direction*a[sortKey].localeCompare(b[sortKey]):direction*(a[sortKey]-b[sortKey]));
   rows.innerHTML=view.length?view.map((x,i)=>`<tr><td class="rank">${i+1}</td><td class="model"><a href="${esc(link(x.detailsUrl))}" target="_blank" rel="noopener">${esc(x.model)}</a></td><td>${fmt(x.correct)}</td><td>${fmt(x.incorrect)}</td><td>${fmt(x.partialAbstain)}</td><td class="oi ${cls(x.omniscienceIndex)}">${x.omniscienceIndex>0?"+":""}${fmt(x.omniscienceIndex)}</td><td>${fmt(x.hallucinationRate)}%</td><td>${fmt(x.standardPercent)}%</td><td class="profile">${esc(x.profile)}</td></tr>`).join(""):'<tr><td colspan="9" class="empty">No models match these filters.</td></tr>';
   document.querySelectorAll("th[data-key]").forEach(th=>th.setAttribute("aria-sort",th.dataset.key===sortKey?(direction>0?"ascending":"descending"):"none"));
@@ -79,5 +79,6 @@ document.querySelectorAll("th[data-key] button").forEach(button=>button.onclick=
 const setTheme=t=>{document.documentElement.dataset.theme=t;theme.textContent=t==="dark"?"Light mode":"Dark mode"};
 theme.onclick=()=>{const t=document.documentElement.dataset.theme==="dark"?"light":"dark";setTheme(t);try{localStorage.setItem("aa-theme",t)}catch{}};
 let savedTheme=null;try{savedTheme=localStorage.getItem("aa-theme")}catch{}
-setTheme(savedTheme==="light"?"light":"dark");
+setTheme(savedTheme==="light"||savedTheme==="dark"?savedTheme:(matchMedia("(prefers-color-scheme: light)").matches?"light":"dark"));
+if(matchMedia("(min-width: 761px)").matches)$("legend").open=true;
 </script></body></html>

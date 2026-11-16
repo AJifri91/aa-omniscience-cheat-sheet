@@ -20,6 +20,7 @@
     "muse-spark-open",
     "muse-wonder",
     "muse-wonder-full",
+    "qwen4-max",
     "tencent-hy4"
   ],
   "seenBenchmarkReleases": [
@@ -410,6 +411,7 @@
     "qwen3-vl-4b-instruct",
     "qwen3-vl-8b",
     "qwen3-vl-8b-instruct",
+    "qwen4-max",
     "reflection-beam",
     "reka-flash-3",
     "ring-1t",
@@ -474,6 +476,7 @@
     "nemotron-3-5-bolt-74b-a9b",
     "nemotron-3-5-super",
     "nemotron-3-5-super-vl",
+    "qwen4-max",
     "reflection-beam",
     "solar-mini4",
     "solar-pro-4",
