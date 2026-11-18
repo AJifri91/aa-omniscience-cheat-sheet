@@ -1,7 +1,7 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-17T23:30:12.790197Z",
-  "modelCount": 29,
+  "updatedAt": "2026-11-18T22:56:33.677532Z",
+  "modelCount": 30,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
     "accuracyBasis": "Artificial Analysis whole-percent display (round half up)",
@@ -28,12 +28,29 @@
       "profile": "Strong knowledge, with meaningful hallucination risk on misses."
     },
     {
+      "model": "Gemini 4 Neon (xhigh)",
+      "releaseKey": "gemini-4-neon",
+      "creatorSlug": "google",
+      "reasoningRank": 50,
+      "releaseDate": "2026-11-18",
+      "chartDefaultSelected": true,
+      "detailsUrl": "https://artificialanalysis.ai/models/gemini-4-neon",
+      "correct": 60.47,
+      "incorrect": 5.7,
+      "partialAbstain": 33.83,
+      "accuracy": 60.47,
+      "omniscienceIndex": 54.77,
+      "hallucinationRate": 14.42,
+      "standardPercent": 77.38,
+      "profile": "Frontier reliability: high knowledge with comparatively controlled guessing."
+    },
+    {
       "model": "Gemini 4 Carbon (high)",
       "releaseKey": "gemini-4-carbon",
       "creatorSlug": "google",
       "reasoningRank": 40,
       "releaseDate": "2026-10-28",
-      "chartDefaultSelected": true,
+      "chartDefaultSelected": false,
       "detailsUrl": "https://artificialanalysis.ai/models/gemini-4-carbon",
       "correct": 58.27,
       "incorrect": 4.77,
