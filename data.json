@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-18T22:56:33.677532Z",
+  "updatedAt": "2026-11-19T13:05:38.845564Z",
   "modelCount": 30,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
@@ -50,7 +50,7 @@
       "creatorSlug": "google",
       "reasoningRank": 40,
       "releaseDate": "2026-10-28",
-      "chartDefaultSelected": false,
+      "chartDefaultSelected": true,
       "detailsUrl": "https://artificialanalysis.ai/models/gemini-4-carbon",
       "correct": 58.27,
       "incorrect": 4.77,
