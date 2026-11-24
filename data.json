@@ -1,6 +1,6 @@
 {
   "source": "https://artificialanalysis.ai/evaluations/omniscience",
-  "updatedAt": "2026-11-19T13:05:38.845564Z",
+  "updatedAt": "2026-11-24T14:51:58.868796Z",
   "modelCount": 30,
   "admissionPolicy": {
     "newModelMinimumAccuracy": 35,
@@ -402,7 +402,7 @@
       "profile": "Positive reliability, but mistakes remain frequent when uncertain."
     },
     {
-      "model": "GLM-5.3-Flash",
+      "model": "GLM-5.3-Flash (max)",
       "releaseKey": "glm-5-3-flash",
       "creatorSlug": "zai",
       "reasoningRank": 60,
