@@ -56,6 +56,7 @@ GitHub Actions, 4× a day (.github/workflows/update-data.yml)
 The updater **fails closed**: if anything looks wrong, it changes nothing and the site keeps the last good data. Then:
 
 - **An issue opens automatically** ("Data updater is failing") with the error, the failed step and what to do. It updates on repeat failures and closes itself after the next successful run.
+- **Brief outages are ridden out.** Network errors, timeouts and HTTP 429/5xx are retried with backoff. If the feed the page points to answers 404, the updater waits (1 min, then 3 min) and re-reads the page before giving up, because AA's live feed has briefly 404'd before (2026-11-25).
 - **AA's raw responses are saved** as a workflow artifact (`aa-snapshot-<run id>`, kept 14 days), so the failure can be reproduced offline.
 - **The sanity guard** stops a run that would remove more than 3, add more than 5, or re-score more than 3 models at once (limits in `config.json`). That pattern usually means the parser broke rather than the benchmark changing.
 - **The site shows the updater's status badge** beside "Data last changed", so quiet weeks at AA are not mistaken for a broken updater, and a broken updater is never mistaken for a quiet week.
@@ -64,7 +65,7 @@ The updater **fails closed**: if anything looks wrong, it changes nothing and th
 
 ## When AA changes its site
 
-1. Open the failure issue. Errors name what broke, for example `models[12] ('gpt-x'): omniscienceBreakdown.accuracy must be a number from 0 to 1, got '58%'` or `No model-feed manifest was found in the page`.
+1. Open the failure issue. If it is a one-off network or HTTP error (such as a 404 on `/data/….txt`), first re-run the failed job: AA outages are often over within the hour. Errors name what broke, for example `models[12] ('gpt-x'): omniscienceBreakdown.accuracy must be a number from 0 to 1, got '58%'` or `No model-feed manifest was found in the page`.
 2. Download the `aa-snapshot-…` artifact from the failed run and unzip it.
 3. Reproduce the failure locally, without contacting AA:
    ```bash

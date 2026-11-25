@@ -124,13 +124,21 @@ def site(feed=None, *, key=TEST_KEY, layout="hashed-nonce", manifest_prop="manif
 class FakeFetcher:
     """A Fetcher stand-in that serves a fake site and records what was asked for."""
 
-    def __init__(self, responses):
+    def __init__(self, responses, *, missing_for=None):
+        """`missing_for` maps a URL to how many requests answer 404 before it
+        is served, imitating AA's feed briefly 404ing while still live."""
         self.site = dict(responses)
         self.responses = {}
+        self.missing_for = dict(missing_for or {})
+        self.requests = []
 
     def get(self, url, *, timeout):
-        from aa_source import SourceError
+        from aa_source import NotFoundError
+        self.requests.append(url)
+        if self.missing_for.get(url, 0) > 0:
+            self.missing_for[url] -= 1
+            raise NotFoundError(f"{url} returned HTTP 404.")
         if url not in self.site:
-            raise SourceError(f"{url} returned HTTP 404.")
+            raise NotFoundError(f"{url} returned HTTP 404.")
         self.responses[url] = self.site[url]
         return self.site[url]
