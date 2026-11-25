@@ -56,6 +56,12 @@ class SourceError(RuntimeError):
     """AA's data could not be read safely. The previous published data is kept."""
 
 
+class NotFoundError(SourceError):
+    """AA answered 404/410. Usually permanent, but AA's feed file has briefly
+    404'd while still being referenced by the page (seen 2026-11-25), so
+    load_records() waits and re-reads the page before giving up on the feed."""
+
+
 # --------------------------------------------------------------------------
 # Fetching (with retries), plus capture and replay of raw responses
 # --------------------------------------------------------------------------
@@ -84,6 +90,8 @@ def http_get(url, *, timeout, attempts=3, delays=(5, 20), opener=urlopen, sleep=
             with opener(request, timeout=timeout) as response:
                 return response.read()
         except HTTPError as exc:
+            if exc.code in (404, 410):
+                raise NotFoundError(f"{url} returned HTTP {exc.code}.") from exc
             if exc.code not in RETRY_STATUS:
                 raise SourceError(f"{url} returned HTTP {exc.code}.") from exc
             last = exc
@@ -558,12 +566,14 @@ def reasoning_rank(row, meta):
 # Entry point
 # --------------------------------------------------------------------------
 
-def load_records(fetcher, previous_models=(), minimum_records=15):
-    """Fetch AA's page and feed and return (validated model records, stats).
+FEED_NOT_FOUND_DELAYS = (60, 180)
 
-    Each record is a plain dict with: slug, name, releaseKey, creatorSlug,
-    reasoningRank, releaseDate, chartDefaultSelected, accuracy (0-1),
-    hallucinationRate (0-1) and omniscience (-100 to 100).
+
+def _read_page_and_feed(fetcher):
+    """One pass: fetch the page, find its manifests, fetch and decode a feed.
+
+    Returns (identities, rows, stats, problems, all_not_found); rows is None if
+    no manifest gave a usable feed.
     """
     page = fetcher.get(SOURCE_URL, timeout=PAGE_TIMEOUT)
     objects, stats = page_objects(page)
@@ -575,18 +585,47 @@ def load_records(fetcher, previous_models=(), minimum_records=15):
                           "renamed it; never fall back to the page's default chart selection, "
                           "which silently omits new models.")
 
-    problems, rows = [], None
+    problems, not_found = [], 0
     for manifest in manifests:
         url = SITE + manifest["path"]
         try:
             feed = decode_feed(fetcher.get(url, timeout=FEED_TIMEOUT), manifest.get("key"))
             rows = scored_rows(feed)
             stats.update(feedPath=manifest["path"], feedRows=len(feed["models"]), scoredRows=len(rows))
-            break
+            return identities, rows, stats, problems, False
+        except NotFoundError as exc:
+            not_found += 1
+            problems.append(f"{manifest['path']}: {exc}")
         except SourceError as exc:
             problems.append(f"{manifest['path']}: {exc}")
-    if rows is None:
-        raise SourceError("No usable model feed: " + " | ".join(problems))
+    return identities, None, stats, problems, not_found == len(manifests)
+
+
+def load_records(fetcher, previous_models=(), minimum_records=15, *,
+                 not_found_delays=FEED_NOT_FOUND_DELAYS, sleep=time.sleep):
+    """Fetch AA's page and feed and return (validated model records, stats).
+
+    Each record is a plain dict with: slug, name, releaseKey, creatorSlug,
+    reasoningRank, releaseDate, chartDefaultSelected, accuracy (0-1),
+    hallucinationRate (0-1) and omniscience (-100 to 100).
+
+    If every feed the page points to answers 404/410, wait and re-read the
+    page (which may name a new feed) before failing: AA's feed has briefly
+    404'd while live. Other feed problems (bad key, changed format) fail at once.
+    """
+    attempts = len(not_found_delays) + 1
+    for attempt in range(1, attempts + 1):
+        identities, rows, stats, problems, all_not_found = _read_page_and_feed(fetcher)
+        if rows is not None:
+            if attempt > 1:
+                stats.update(feedNotFoundRetries=attempt - 1)
+            break
+        if not all_not_found or attempt == attempts:
+            raise SourceError("No usable model feed: " + " | ".join(problems))
+        wait = not_found_delays[attempt - 1]
+        print(f"AA's feed was not found ({' | '.join(problems)}); re-reading the page in {wait}s "
+              f"(attempt {attempt + 1} of {attempts}).")
+        sleep(wait)
 
     previous_by_slug = {
         prior["detailsUrl"].rsplit("/", 1)[-1]: prior

@@ -203,7 +203,7 @@ class RetryTests(unittest.TestCase):
 
     def test_permanent_http_errors_fail_immediately(self):
         open_, calls = self.opener([self.http_error(404)])
-        with self.assertRaisesRegex(SourceError, "HTTP 404"):
+        with self.assertRaisesRegex(aa_source.NotFoundError, "HTTP 404"):
             http_get("https://x", timeout=1, opener=open_, sleep=lambda _: None)
         self.assertEqual(len(calls), 1)
 
@@ -251,8 +251,34 @@ class LoadRecordsTests(unittest.TestCase):
     def test_broken_feed_reports_every_manifest_tried(self):
         responses = fake_aa.site()
         responses[FEED_URL] = b"not encrypted data"
+        waits = []
         with self.assertRaisesRegex(SourceError, "No usable model feed: /data/0123456789abcdef.txt: "):
-            load_records(fake_aa.FakeFetcher(responses))
+            load_records(fake_aa.FakeFetcher(responses), sleep=waits.append)
+        self.assertEqual(waits, [], "a format problem must not be retried")
+
+    def test_feed_briefly_not_found_is_retried_after_rereading_the_page(self):
+        # 2026-11-25: AA's live feed answered 404 for a while, then came back.
+        fetcher = fake_aa.FakeFetcher(fake_aa.site(), missing_for={FEED_URL: 2})
+        waits = []
+        records, stats = load_records(fetcher, sleep=waits.append)
+        self.assertEqual(len(records), 16)
+        self.assertEqual(waits, list(aa_source.FEED_NOT_FOUND_DELAYS))
+        self.assertEqual(stats["feedNotFoundRetries"], 2)
+        self.assertEqual(fetcher.requests, [PAGE_URL, FEED_URL] * 3)
+
+    def test_feed_that_stays_not_found_fails_closed(self):
+        fetcher = fake_aa.FakeFetcher(fake_aa.site(), missing_for={FEED_URL: 99})
+        waits = []
+        with self.assertRaisesRegex(SourceError, "No usable model feed: .*HTTP 404"):
+            load_records(fetcher, sleep=waits.append)
+        self.assertEqual(len(waits), len(aa_source.FEED_NOT_FOUND_DELAYS))
+
+    def test_missing_page_is_not_retried_by_the_feed_loop(self):
+        fetcher = fake_aa.FakeFetcher(fake_aa.site(), missing_for={PAGE_URL: 1})
+        waits = []
+        with self.assertRaises(aa_source.NotFoundError):
+            load_records(fetcher, sleep=waits.append)
+        self.assertEqual(waits, [])
 
     def test_snapshot_round_trip_replays_the_same_records(self):
         fetcher = fake_aa.FakeFetcher(fake_aa.site())
